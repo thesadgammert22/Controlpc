@@ -26,22 +26,23 @@ function startConnection() {
         }
     };
 
-    // Create a data channel for inputs
+    // Create a data channel for real-time control
     dataChannel = peerConnection.createDataChannel("controlChannel");
     dataChannel.onopen = () => console.log("Data channel open!");
     dataChannel.onclose = () => console.log("Data channel closed!");
-}
 
-// Send mouse movement
-function sendMouseMove(x, y) {
-    if (dataChannel.readyState === "open") {
-        dataChannel.send(JSON.stringify({ type: "mouse_move", x, y }));
-    }
-}
+    // Capture keyboard events
+    document.addEventListener("keydown", (event) => {
+        if (dataChannel.readyState === "open") {
+            const keyData = { type: "key_press", key: event.key };
+            dataChannel.send(JSON.stringify(keyData));
+        }
+    });
 
-// Send key press
-function sendKeyPress(key) {
-    if (dataChannel.readyState === "open") {
-        dataChannel.send(JSON.stringify({ type: "key_press", key }));
-    }
+    document.addEventListener("keyup", (event) => {
+        if (dataChannel.readyState === "open") {
+            const keyData = { type: "key_release", key: event.key };
+            dataChannel.send(JSON.stringify(keyData));
+        }
+    });
 }
