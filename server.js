@@ -48,6 +48,11 @@ app.post("/login", (req, res) => {
     }
 });
 
+// /feed route to prevent 'Cannot GET /feed' errors
+app.get("/feed", (req, res) => {
+    res.status(200).send("<h1>Screen feed will be implemented here</h1>"); // Temporary placeholder
+});
+
 // Start the server
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
