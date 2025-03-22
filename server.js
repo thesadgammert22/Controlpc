@@ -17,7 +17,7 @@ const PASSWORD = "12345";
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the "public" directory
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 // WebSocket handlers
@@ -26,7 +26,6 @@ wss.on("connection", (ws) => {
 
     ws.on("message", (message) => {
         console.log(`Received: ${message}`);
-        // Broadcast the message to all connected clients
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(message);
@@ -43,23 +42,22 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Login route for authentication
+// Login route
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
     if (username === USERNAME && password === PASSWORD) {
-        res.redirect("/broadcast.html"); // Redirect to broadcast page on successful login
+        res.redirect("/broadcast.html"); // Redirect to the remote control page
     } else {
-        res.status(401).send("Invalid username or password"); // Error response for invalid credentials
+        res.status(401).send("Invalid username or password"); // Send error for invalid credentials
     }
 });
 
-// Properly implement the /feed route
+// /feed route to handle GET requests
 app.get("/feed", (req, res) => {
-    // Placeholder response for now, replace with live screen feed implementation later
-    res.status(200).send("<h1>Screen feed will be implemented here</h1>");
+    res.status(200).send("<h1>Screen feed will be implemented here</h1>"); // Placeholder
 });
 
-// Start the HTTP server
+// Start the server
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
