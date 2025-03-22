@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 8080;
 
 // Hardcoded username and password
 const USERNAME = "admin";
-const PASSWORD = "password123";
+const PASSWORD = "12345";
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
