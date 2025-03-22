@@ -8,33 +8,35 @@
 <body>
     <h1>Remote Control Interface</h1>
 
-    <!-- Input for WebSocket URL -->
+    <!-- Connect WebSocket -->
     <div>
-        <label for="ws-url">WebSocket URL:</label>
-        <input id="ws-url" type="text" value="ws://localhost:8765">
-        <button id="connect-ws">Connect</button>
+        <h2>WebSocket Connection</h2>
+        <button id="connect-ws">Connect to WebSocket</button>
+        <p id="status">Status: Not connected</p>
     </div>
 
     <!-- iframe for live screen feed -->
     <div>
         <h2>Live Screen Feed</h2>
         <iframe id="feed-iframe" width="800" height="600" frameborder="0"></iframe>
-        <p id="status">Status: Not connected</p>
     </div>
 
     <script>
         let ws; // WebSocket object
 
+        // Function to connect to WebSocket server
         document.getElementById("connect-ws").addEventListener("click", () => {
-            const wsUrl = document.getElementById("ws-url").value;
-            ws = new WebSocket(wsUrl);
-
             const statusElement = document.getElementById("status");
+            statusElement.textContent = "Status: Connecting to WebSocket...";
+
+            // Replace the URL with your WebSocket server address if different
+            const wsUrl = "ws://localhost:8765"; // Change to public-facing WebSocket URL if needed
+            ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 console.log("WebSocket connection established");
-                alert("WebSocket connection established!");
                 statusElement.textContent = "Status: WebSocket connected!";
+                alert("WebSocket connection established!");
             };
 
             ws.onmessage = (event) => {
