@@ -1,5 +1,5 @@
 // Establish WebSocket connection to the WebSocket server
-const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your WebSocket server URL
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Your Render-deployed WebSocket server URL
 
 // WebSocket connection handlers
 socket.onopen = () => {
@@ -39,21 +39,17 @@ socket.onclose = () => {
     console.log("WebSocket connection closed");
 };
 
-// Simulate mouse movement
+// Simulate mouse movement (logs actions)
 function simulateMouseMove(x, y) {
     console.log(`Simulating mouse move to: (${x}, ${y})`);
-    // Browser limitation: Cannot move the actual system mouse
-    // Replace this with system-level execution for controlled systems
 }
 
-// Simulate mouse clicks
+// Simulate mouse clicks (logs actions)
 function simulateMouseClick(button) {
     console.log(`Simulating ${button} mouse click`);
-    // Browser limitation: Cannot perform actual system-level mouse clicks
 }
 
-// Simulate key presses
+// Simulate key presses (logs actions)
 function simulateKeyPress(key) {
     console.log(`Simulating key press: ${key}`);
-    // Browser limitation: Cannot perform actual system-level key presses
 }
