@@ -3,6 +3,7 @@ const http = require("http");
 const WebSocket = require("ws");
 const path = require("path");
 const bodyParser = require("body-parser");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
 const server = http.createServer(app);
@@ -10,14 +11,14 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 8080;
 
-// Hardcoded username and password for authentication
+// Hardcoded username and password
 const USERNAME = "admin";
 const PASSWORD = "12345";
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the "public" directory
+// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
 // WebSocket handlers
@@ -42,20 +43,22 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Login route for authentication
+// Login route
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
     if (username === USERNAME && password === PASSWORD) {
-        res.redirect("/broadcast.html"); // Redirect to the remote control page
+        res.redirect("/broadcast.html");
     } else {
-        res.status(401).send("Invalid username or password"); // Send error for invalid credentials
+        res.status(401).send("Invalid username or password");
     }
 });
 
-// /feed route to handle GET requests for screen feed
-app.get("/feed", (req, res) => {
-    res.status(200).send("<h1>Screen feed will be implemented here</h1>"); // Placeholder
-});
+// Proxy /feed to the Python Flask server
+app.use('/feed', createProxyMiddleware({
+    target: 'http://localhost:8081',
+    changeOrigin: true,
+    logLevel: 'debug'
+}));
 
 // Start the server
 server.listen(PORT, () => {
