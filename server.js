@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 10000;
-const FLASK_SERVER = process.env.FLASK_SERVER || "http://localhost:8081"; // Dynamic Flask server address
+const FLASK_SERVER = "http://localhost:8081"; // Proxy Flask running locally
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,7 +40,7 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Proxy /feed to Flask server
+// Proxy /feed requests to the Flask server
 app.use(
     "/feed",
     createProxyMiddleware({
@@ -52,5 +52,5 @@ app.use(
 
 // Start the server
 server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on https://controlpc.onrender.com`);
 });
