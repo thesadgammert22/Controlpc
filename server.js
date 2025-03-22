@@ -31,10 +31,10 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Screen feed endpoint implementation
+// Screen feed endpoint placeholder
 app.get("/feed", (req, res) => {
-    res.status(200).send("<h1>Screen feed is not yet functional</h1>");
-    // Replace this placeholder with screen streaming code when ready
+    res.status(200).send("<h1>Screen feed is not yet implemented</h1>");
+    // Replace this placeholder with screen streaming implementation
 });
 
 // Start the server
