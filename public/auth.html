@@ -2,16 +2,18 @@
 <html>
 <head>
     <title>Authentication</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Enter Token to Access Broadcast</h1>
-    <form id="authForm">
-        <input type="text" id="tokenInput" placeholder="Enter token" required>
-        <button type="submit">Enter</button>
+    <h1>Authentication</h1>
+    <form method="POST" action="/login">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+        <button type="submit">Login</button>
     </form>
-
-    <!-- Place the script here to ensure it runs after the DOM has loaded -->
-    <script src="./scripts/auth.js"></script>
 </body>
 </html>
