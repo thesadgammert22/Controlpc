@@ -26,3 +26,19 @@ iframe {
     border: 1px solid #333;
     margin-top: 20px;
 }
+
+form {
+    margin: 20px 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input {
+    margin-bottom: 15px;
+    padding: 8px;
+    width: 300px;
+}
