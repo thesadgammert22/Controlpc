@@ -1,18 +1,17 @@
-// Establish connection to the WebSocket server
-const socket = new WebSocket("wss://controlpc.onrender.com"); // Your Render WebSocket server URL
+const socket = new WebSocket("wss://controlpc.onrender.com");
 
-// WebSocket connection handlers
 socket.onopen = () => {
     console.log("Connected to WebSocket server");
 };
+
 socket.onerror = (error) => {
     console.error("WebSocket error:", error);
 };
+
 socket.onclose = () => {
     console.log("WebSocket connection closed");
 };
 
-// Function to send mouse move commands
 function sendMouseMove(x, y) {
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(`mouse_move:${x},${y}`);
@@ -21,7 +20,6 @@ function sendMouseMove(x, y) {
     }
 }
 
-// Function to send mouse click commands
 function sendMouseClick(button) {
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(`mouse_click:${button}`);
@@ -30,7 +28,6 @@ function sendMouseClick(button) {
     }
 }
 
-// Function to send key press commands
 function sendKeyPress(key) {
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(`key_press:${key}`);
@@ -39,15 +36,14 @@ function sendKeyPress(key) {
     }
 }
 
-// Example: Connect these functions to HTML buttons
 document.getElementById("mouseMoveButton").addEventListener("click", () => {
-    sendMouseMove(100, 200); // Example: Move mouse to position (100, 200)
+    sendMouseMove(100, 200);
 });
 
 document.getElementById("mouseClickButton").addEventListener("click", () => {
-    sendMouseClick("left"); // Example: Left mouse click
+    sendMouseClick("left");
 });
 
 document.getElementById("keyPressButton").addEventListener("click", () => {
-    sendKeyPress("A"); // Example: Press "A" on the keyboard
+    sendKeyPress("A");
 });
