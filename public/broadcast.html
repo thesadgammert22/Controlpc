@@ -12,9 +12,16 @@
     <button id="keyPressButton">Press Key</button>
 
     <h2>Live Screen Feed</h2>
-    <script>
-    const flaskFeedUrl = `http://${window.location.hostname}:8081/feed`;
-    document.getElementById("feed-iframe").src = flaskFeedUrl;
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const flaskFeedUrl = `http://${window.location.hostname}:8081/feed`;
+        const iframe = document.getElementById("feed-iframe");
+        if (iframe) {
+            iframe.src = flaskFeedUrl;
+        } else {
+            console.error("Could not find iframe with id 'feed-iframe'");
+        }
+    });
 </script>
 <iframe id="feed-iframe" width="800" height="600" frameborder="0"></iframe>
 
