@@ -5,7 +5,7 @@ import pyautogui
 
 app = Flask(__name__)
 
-# Function to capture the screen and encode it as a MJPEG stream
+# Function to capture and encode the screen
 def capture_screen():
     while True:
         # Capture the screen
