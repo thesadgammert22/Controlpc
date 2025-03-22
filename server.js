@@ -3,7 +3,7 @@ const http = require("http");
 const WebSocket = require("ws");
 const path = require("path");
 const bodyParser = require("body-parser");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const { spawn } = require("child_process"); // For running Python script
 
 const app = express();
 const server = http.createServer(app);
@@ -53,14 +53,33 @@ app.post("/login", (req, res) => {
     }
 });
 
-// Proxy /feed to the Python Flask server
-app.use('/feed', createProxyMiddleware({
-    target: 'http://localhost:8081',
-    changeOrigin: true,
-    logLevel: 'debug'
-}));
+// Proxy /feed to the Flask server
+const { createProxyMiddleware } = require("http-proxy-middleware");
+app.use(
+    "/feed",
+    createProxyMiddleware({
+        target: "http://localhost:8081", // Flask server will run on port 8081
+        changeOrigin: true,
+        logLevel: "debug",
+    })
+);
 
-// Start the server
+// Start the Flask screen feed server
+const pythonProcess = spawn("python", ["flask_feed.py"]); // Adjust to your Python path if needed
+
+pythonProcess.stdout.on("data", (data) => {
+    console.log(`Flask: ${data}`);
+});
+
+pythonProcess.stderr.on("data", (data) => {
+    console.error(`Flask Error: ${data}`);
+});
+
+pythonProcess.on("close", (code) => {
+    console.log(`Flask process exited with code ${code}`);
+});
+
+// Start the Node.js server
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
