@@ -1,29 +1,42 @@
-const WebSocket = require("ws");
 const express = require("express");
+const http = require("http");
+const WebSocket = require("ws");
 const path = require("path");
 
 const app = express();
-const server = app.listen(3000, () => console.log("Server running on port 3000"));
-
-// Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, "public")));
-
-// WebSocket signaling logic
+const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const PORT = process.env.PORT || 8080;
+
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
+
+// WebSocket handlers
 wss.on("connection", (ws) => {
-    console.log("A client connected");
+    console.log("WebSocket connection established");
 
     ws.on("message", (message) => {
-        // Relay messages between clients
+        console.log(`Received: ${message}`);
+        // Broadcast the message to all connected clients
         wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
+            if (client.readyState === WebSocket.OPEN) {
                 client.send(message);
             }
         });
     });
 
     ws.on("close", () => {
-        console.log("A client disconnected");
+        console.log("WebSocket connection closed");
     });
+});
+
+// Screen feed endpoint placeholder
+app.get("/feed", (req, res) => {
+    res.status(404).send("Screen feed endpoint is not implemented yet"); // Placeholder for now
+});
+
+// Start the server
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
