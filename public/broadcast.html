@@ -11,64 +11,53 @@
     <!-- Input for WebSocket URL -->
     <div>
         <label for="ws-url">WebSocket URL:</label>
-        <input id="ws-url" type="text" value="wss://controlpc.onrender.com">
+        <input id="ws-url" type="text" value="ws://localhost:8765">
         <button id="connect-ws">Connect</button>
-    </div>
-
-    <!-- Connect button for fetching the ngrok URL -->
-    <div>
-        <h2>Screen Feed Connection</h2>
-        <button id="connect-feed">Connect to Feed</button>
-        <p id="status">Status: Not connected</p>
     </div>
 
     <!-- iframe for live screen feed -->
     <div>
         <h2>Live Screen Feed</h2>
         <iframe id="feed-iframe" width="800" height="600" frameborder="0"></iframe>
+        <p id="status">Status: Not connected</p>
     </div>
 
     <script>
         let ws; // WebSocket object
 
-        // Function to connect to WebSocket
         document.getElementById("connect-ws").addEventListener("click", () => {
             const wsUrl = document.getElementById("ws-url").value;
             ws = new WebSocket(wsUrl);
 
+            const statusElement = document.getElementById("status");
+
             ws.onopen = () => {
                 console.log("WebSocket connection established");
                 alert("WebSocket connection established!");
+                statusElement.textContent = "Status: WebSocket connected!";
             };
-            ws.onmessage = (event) => console.log("Received message:", event.data);
-            ws.onclose = () => console.log("WebSocket connection closed");
-            ws.onerror = (error) => console.error("WebSocket error:", error);
-        });
 
-        // Function to fetch the ngrok URL and set it in the iframe
-        document.getElementById("connect-feed").addEventListener("click", () => {
-            const statusElement = document.getElementById("status");
-            statusElement.textContent = "Status: Connecting...";
+            ws.onmessage = (event) => {
+                console.log("Received message:", event.data);
 
-            // Dynamically build the endpoint URL
-            const endpointUrl = `${window.location.origin}/ngrok-url`;
+                // Parse ngrok URL from WebSocket message
+                if (event.data.startsWith("NGROK_URL::")) {
+                    const ngrokUrl = event.data.split("::")[1];
+                    const iframe = document.getElementById("feed-iframe");
+                    iframe.src = `${ngrokUrl}/feed`; // Set iframe source dynamically
+                    statusElement.textContent = "Status: Connected to feed!";
+                }
+            };
 
-            fetch(endpointUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.ngrok_url) {
-                        const iframe = document.getElementById("feed-iframe");
-                        iframe.src = `${data.ngrok_url}/feed`; // Dynamically set iframe source
-                        statusElement.textContent = "Status: Connected to feed!";
-                    } else {
-                        console.error("Error: Ngrok URL not found");
-                        statusElement.textContent = "Status: Failed to connect.";
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching ngrok URL:", error);
-                    statusElement.textContent = "Status: Failed to connect.";
-                });
+            ws.onclose = () => {
+                console.log("WebSocket connection closed");
+                statusElement.textContent = "Status: WebSocket disconnected.";
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                statusElement.textContent = "Status: WebSocket error occurred.";
+            };
         });
     </script>
 </body>
