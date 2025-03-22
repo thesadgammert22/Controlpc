@@ -1,74 +1,59 @@
-// Node.js WebSocket Server for the Controlled PC
-const WebSocket = require("ws");
-const { exec } = require("child_process");
+// Establish WebSocket connection to the WebSocket server
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your WebSocket server URL
 
-// WebSocket server setup
-const server = new WebSocket.Server({ port: 12345 }); // Port for WebSocket communication
+// WebSocket connection handlers
+socket.onopen = () => {
+    console.log("Connected to WebSocket server");
+};
 
-server.on("connection", (socket) => {
-    console.log("Controller connected");
+socket.onmessage = (event) => {
+    console.log(`Received command: ${event.data}`);
+    const message = event.data;
 
-    // Listen for incoming commands
-    socket.on("message", (message) => {
-        console.log(`Received command: ${message}`);
-        try {
-            if (message.startsWith("mouse_move")) {
-                // Example: "mouse_move:100,200"
-                const [, coords] = message.split(":");
-                const [x, y] = coords.split(",").map(Number);
-                moveMouse(x, y);
-            } else if (message.startsWith("mouse_click")) {
-                // Example: "mouse_click:left"
-                const [, button] = message.split(":");
-                mouseClick(button);
-            } else if (message.startsWith("key_press")) {
-                // Example: "key_press:A"
-                const [, key] = message.split(":");
-                keyPress(key);
-            }
-        } catch (error) {
-            console.error(`Error processing command: ${error.message}`);
+    try {
+        // Parse the message and act accordingly
+        if (message.startsWith("mouse_move")) {
+            // Example: "mouse_move:100,200"
+            const [, coords] = message.split(":");
+            const [x, y] = coords.split(",").map(Number);
+            simulateMouseMove(x, y);
+        } else if (message.startsWith("mouse_click")) {
+            // Example: "mouse_click:left"
+            const [, button] = message.split(":");
+            simulateMouseClick(button);
+        } else if (message.startsWith("key_press")) {
+            // Example: "key_press:A"
+            const [, key] = message.split(":");
+            simulateKeyPress(key);
         }
-    });
+    } catch (error) {
+        console.error(`Error processing command: ${error.message}`);
+    }
+};
 
-    socket.on("close", () => {
-        console.log("Controller disconnected");
-    });
-});
+socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+};
 
-// Function to simulate mouse movement (Windows only)
-function moveMouse(x, y) {
-    const command = `nircmd.exe setcursor ${x} ${y}`; // Use NirCmd for mouse control
-    exec(command, (error) => {
-        if (error) {
-            console.error(`Error moving mouse: ${error.message}`);
-        } else {
-            console.log(`Mouse moved to: (${x}, ${y})`);
-        }
-    });
+socket.onclose = () => {
+    console.log("WebSocket connection closed");
+};
+
+// Simulate mouse movement
+function simulateMouseMove(x, y) {
+    console.log(`Simulating mouse move to: (${x}, ${y})`);
+    // Browser limitation: Cannot move the actual system mouse
+    // Replace this with system-level execution for controlled systems
 }
 
-// Function to simulate mouse click (Windows only)
-function mouseClick(button) {
-    const clickType = button === "left" ? "left click" : "right click";
-    const command = `nircmd.exe sendmouse ${clickType}`;
-    exec(command, (error) => {
-        if (error) {
-            console.error(`Error clicking mouse: ${error.message}`);
-        } else {
-            console.log(`Mouse ${button} clicked`);
-        }
-    });
+// Simulate mouse clicks
+function simulateMouseClick(button) {
+    console.log(`Simulating ${button} mouse click`);
+    // Browser limitation: Cannot perform actual system-level mouse clicks
 }
 
-// Function to simulate key press (Windows only)
-function keyPress(key) {
-    const command = `nircmd.exe sendkeypress ${key}`;
-    exec(command, (error) => {
-        if (error) {
-            console.error(`Error pressing key: ${error.message}`);
-        } else {
-            console.log(`Key pressed: ${key}`);
-        }
-    });
+// Simulate key presses
+function simulateKeyPress(key) {
+    console.log(`Simulating key press: ${key}`);
+    // Browser limitation: Cannot perform actual system-level key presses
 }
