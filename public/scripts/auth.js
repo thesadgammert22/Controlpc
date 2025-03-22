@@ -1,13 +1,19 @@
-document.getElementById("authForm").addEventListener("submit", (event) => {
-    event.preventDefault(); // Prevent the page from reloading
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("authForm");
+    if (form) {
+        form.addEventListener("submit", (event) => {
+            event.preventDefault(); // Prevent form submission from reloading the page
 
-    const token = document.getElementById("tokenInput").value;
-    const correctToken = "12345"; // Replace with your desired token
+            const token = document.getElementById("tokenInput").value;
+            const correctToken = "12345"; // Replace with your desired token
 
-    if (token === correctToken) {
-        // Redirect to the broadcast.html page upon entering the correct token
-        window.location.href = "./broadcast.html";
+            if (token === correctToken) {
+                window.location.href = "./broadcast.html"; // Redirect to broadcast page
+            } else {
+                alert("Invalid token. Please try again.");
+            }
+        });
     } else {
-        alert("Invalid token. Please try again."); // Show error message for incorrect token
+        console.error("Error: Element with id 'authForm' not found.");
     }
 });
