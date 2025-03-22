@@ -10,14 +10,14 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 8080;
 
-// Hardcoded username and password
+// Hardcoded username and password for authentication
 const USERNAME = "admin";
 const PASSWORD = "12345";
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
+// Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
 // WebSocket handlers
@@ -26,6 +26,7 @@ wss.on("connection", (ws) => {
 
     ws.on("message", (message) => {
         console.log(`Received: ${message}`);
+        // Broadcast the message to all connected clients
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(message);
@@ -33,27 +34,32 @@ wss.on("connection", (ws) => {
         });
     });
 
-    ws.on("close", () => {
-        console.log("WebSocket connection closed");
+    ws.on("close", (code, reason) => {
+        console.log(`WebSocket connection closed: ${code}, Reason: ${reason}`);
+    });
+
+    ws.on("error", (error) => {
+        console.error(`WebSocket error: ${error.message}`);
     });
 });
 
-// Login route
+// Login route for authentication
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
     if (username === USERNAME && password === PASSWORD) {
-        res.redirect("/broadcast.html"); // Redirect to the remote control page
+        res.redirect("/broadcast.html"); // Redirect to broadcast page on successful login
     } else {
-        res.status(401).send("Invalid username or password"); // Send error for invalid credentials
+        res.status(401).send("Invalid username or password"); // Error response for invalid credentials
     }
 });
 
-// /feed route to prevent 'Cannot GET /feed' errors
+// Properly implement the /feed route
 app.get("/feed", (req, res) => {
-    res.status(200).send("<h1>Screen feed will be implemented here</h1>"); // Temporary placeholder
+    // Placeholder response for now, replace with live screen feed implementation later
+    res.status(200).send("<h1>Screen feed will be implemented here</h1>");
 });
 
-// Start the server
+// Start the HTTP server
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
