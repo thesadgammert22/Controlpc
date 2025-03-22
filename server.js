@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 10000;
-const FLASK_SERVER = process.env.FLASK_SERVER || "http://localhost:8081"; // Dynamic Flask server address
+const FLASK_SERVER = "https://fresh-cheaply-mule.ngrok-free.app"; // Static ngrok domain
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,11 +40,11 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Proxy /feed to Flask server
+// Proxy /feed requests to the Flask server
 app.use(
     "/feed",
     createProxyMiddleware({
-        target: FLASK_SERVER, // Proxy Flask feed
+        target: FLASK_SERVER,
         changeOrigin: true,
         logLevel: "debug",
     })
