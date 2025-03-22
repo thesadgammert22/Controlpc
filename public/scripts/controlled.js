@@ -1,50 +1,74 @@
-let peerConnection;
+// Node.js WebSocket Server for the Controlled PC
+const WebSocket = require("ws");
+const { exec } = require("child_process");
 
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-const signalingServer = new WebSocket("wss://controlpc.onrender.com"); // Replace with Render server's URL
+// WebSocket server setup
+const server = new WebSocket.Server({ port: 12345 }); // Port for WebSocket communication
 
-signalingServer.onmessage = async (message) => {
-    const data = JSON.parse(message.data);
-    if (data.offer) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        signalingServer.send(JSON.stringify({ answer }));
-    } else if (data.answer) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-    } else if (data.candidate) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }
-};
+server.on("connection", (socket) => {
+    console.log("Controller connected");
 
-async function startConnection() {
-    peerConnection = new RTCPeerConnection(config);
-
-    peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-            signalingServer.send(JSON.stringify({ candidate: event.candidate }));
+    // Listen for incoming commands
+    socket.on("message", (message) => {
+        console.log(`Received command: ${message}`);
+        try {
+            if (message.startsWith("mouse_move")) {
+                // Example: "mouse_move:100,200"
+                const [, coords] = message.split(":");
+                const [x, y] = coords.split(",").map(Number);
+                moveMouse(x, y);
+            } else if (message.startsWith("mouse_click")) {
+                // Example: "mouse_click:left"
+                const [, button] = message.split(":");
+                mouseClick(button);
+            } else if (message.startsWith("key_press")) {
+                // Example: "key_press:A"
+                const [, key] = message.split(":");
+                keyPress(key);
+            }
+        } catch (error) {
+            console.error(`Error processing command: ${error.message}`);
         }
-    };
+    });
 
-    peerConnection.ondatachannel = (event) => {
-        const dataChannel = event.channel;
+    socket.on("close", () => {
+        console.log("Controller disconnected");
+    });
+});
 
-        dataChannel.onmessage = (event) => {
-            const command = JSON.parse(event.data);
+// Function to simulate mouse movement (Windows only)
+function moveMouse(x, y) {
+    const command = `nircmd.exe setcursor ${x} ${y}`; // Use NirCmd for mouse control
+    exec(command, (error) => {
+        if (error) {
+            console.error(`Error moving mouse: ${error.message}`);
+        } else {
+            console.log(`Mouse moved to: (${x}, ${y})`);
+        }
+    });
+}
 
-            if (command.type === "key_press") {
-                console.log(`Key pressed: ${command.key}`);
-                // Logic to simulate key press (e.g., update input fields in the browser)
-                const activeElement = document.activeElement;
-                if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
-                    activeElement.value += command.key;
-                }
-            }
+// Function to simulate mouse click (Windows only)
+function mouseClick(button) {
+    const clickType = button === "left" ? "left click" : "right click";
+    const command = `nircmd.exe sendmouse ${clickType}`;
+    exec(command, (error) => {
+        if (error) {
+            console.error(`Error clicking mouse: ${error.message}`);
+        } else {
+            console.log(`Mouse ${button} clicked`);
+        }
+    });
+}
 
-            if (command.type === "key_release") {
-                console.log(`Key released: ${command.key}`);
-                // Add logic for key release if necessary
-            }
-        };
-    };
+// Function to simulate key press (Windows only)
+function keyPress(key) {
+    const command = `nircmd.exe sendkeypress ${key}`;
+    exec(command, (error) => {
+        if (error) {
+            console.error(`Error pressing key: ${error.message}`);
+        } else {
+            console.log(`Key pressed: ${key}`);
+        }
+    });
 }
