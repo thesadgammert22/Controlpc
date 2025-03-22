@@ -1,7 +1,7 @@
 let peerConnection, dataChannel;
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-const signalingServer = new WebSocket("wss://your-render-server-url"); // Replace with Render server's URL
+const signalingServer = new WebSocket("wss://controlpc.onrender.com"); // Replace with Render server's URL
 
 signalingServer.onmessage = async (message) => {
     const data = JSON.parse(message.data);
