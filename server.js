@@ -17,7 +17,7 @@ const PASSWORD = "12345";
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
+// Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
 // WebSocket handlers
@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Login route
+// Login route for authentication
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
     if (username === USERNAME && password === PASSWORD) {
@@ -52,7 +52,7 @@ app.post("/login", (req, res) => {
     }
 });
 
-// /feed route to handle GET requests
+// /feed route to handle GET requests for screen feed
 app.get("/feed", (req, res) => {
     res.status(200).send("<h1>Screen feed will be implemented here</h1>"); // Placeholder
 });
