@@ -1,30 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Remote Control</title>
-    <link rel="stylesheet" href="./style.css">
-    <script src="./scripts/controller.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Control Interface</title>
 </head>
 <body>
-    <h1>Remote Control</h1>
-    <button id="mouseMoveButton">Move Mouse</button>
-    <button id="mouseClickButton">Click Mouse</button>
-    <button id="keyPressButton">Press Key</button>
+    <h1>Remote Control Interface</h1>
 
-    <h2>Live Screen Feed</h2>
-<iframe id="feed-iframe" width="800" height="600" frameborder="0"></iframe>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        console.log("Setting iframe source...");
-        const flaskFeedUrl = `http://${window.location.hostname}:8081/feed`;
-        const iframe = document.getElementById("feed-iframe");
-        console.log("Iframe element:", iframe);
-        if (iframe) {
-            iframe.src = flaskFeedUrl;
-        } else {
-            console.error("Could not find iframe with id 'feed-iframe'");
+    <!-- Input for WebSocket URL -->
+    <div>
+        <label for="ws-url">WebSocket URL:</label>
+        <input id="ws-url" type="text" value="wss://controlpc.onrender.com">
+    </div>
+
+    <!-- iframe for live screen feed -->
+    <div>
+        <h2>Live Screen Feed</h2>
+        <iframe id="feed-iframe" width="800" height="600" frameborder="0"></iframe>
+    </div>
+
+    <!-- JavaScript to dynamically update iframe source -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Set the ngrok URL for the iframe
+            const feedURL = "https://fresh-cheaply-mule.ngrok-free.app/feed"; // Static ngrok domain
+            const iframe = document.getElementById("feed-iframe");
+            iframe.src = feedURL;
+        });
+
+        // Example WebSocket functionality
+        const wsInput = document.getElementById("ws-url");
+        let ws;
+
+        function connectWebSocket() {
+            ws = new WebSocket(wsInput.value);
+
+            ws.onopen = () => console.log("WebSocket connection established");
+            ws.onmessage = (event) => console.log("Received message:", event.data);
+            ws.onclose = () => console.log("WebSocket connection closed");
+            ws.onerror = (error) => console.error("WebSocket error:", error);
         }
-    });
-</script>
+
+        connectWebSocket();
+    </script>
 </body>
 </html>
