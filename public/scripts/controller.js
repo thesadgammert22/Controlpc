@@ -1,48 +1,53 @@
-let peerConnection, dataChannel;
+// Establish connection to the WebSocket server
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your Render WebSocket server URL
 
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-const signalingServer = new WebSocket("wss://controlpc.onrender.com"); // Replace with Render server's URL
-
-signalingServer.onmessage = async (message) => {
-    const data = JSON.parse(message.data);
-    if (data.offer) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        signalingServer.send(JSON.stringify({ answer }));
-    } else if (data.answer) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-    } else if (data.candidate) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }
+// WebSocket connection handlers
+socket.onopen = () => {
+    console.log("Connected to the WebSocket server");
+};
+socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+};
+socket.onclose = () => {
+    console.log("WebSocket connection closed");
 };
 
-function startConnection() {
-    peerConnection = new RTCPeerConnection(config);
-
-    peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-            signalingServer.send(JSON.stringify({ candidate: event.candidate }));
-        }
-    };
-
-    // Create a data channel for real-time control
-    dataChannel = peerConnection.createDataChannel("controlChannel");
-    dataChannel.onopen = () => console.log("Data channel open!");
-    dataChannel.onclose = () => console.log("Data channel closed!");
-
-    // Capture keyboard events
-    document.addEventListener("keydown", (event) => {
-        if (dataChannel.readyState === "open") {
-            const keyData = { type: "key_press", key: event.key };
-            dataChannel.send(JSON.stringify(keyData));
-        }
-    });
-
-    document.addEventListener("keyup", (event) => {
-        if (dataChannel.readyState === "open") {
-            const keyData = { type: "key_release", key: event.key };
-            dataChannel.send(JSON.stringify(keyData));
-        }
-    });
+// Function to send mouse move commands
+function sendMouseMove(x, y) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(`mouse_move:${x},${y}`);
+    } else {
+        console.error("WebSocket not connected");
+    }
 }
+
+// Function to send mouse click commands
+function sendMouseClick(button) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(`mouse_click:${button}`);
+    } else {
+        console.error("WebSocket not connected");
+    }
+}
+
+// Function to send key press commands
+function sendKeyPress(key) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(`key_press:${key}`);
+    } else {
+        console.error("WebSocket not connected");
+    }
+}
+
+// Example of connecting these functions to HTML buttons
+document.getElementById("mouseMoveButton").addEventListener("click", () => {
+    sendMouseMove(100, 200); // Example: Move mouse to position (100, 200)
+});
+
+document.getElementById("mouseClickButton").addEventListener("click", () => {
+    sendMouseClick("left"); // Example: Left mouse click
+});
+
+document.getElementById("keyPressButton").addEventListener("click", () => {
+    sendKeyPress("A"); // Example: Press "A" on the keyboard
+});
