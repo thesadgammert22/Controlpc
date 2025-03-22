@@ -22,19 +22,21 @@
 
     <!-- JavaScript to dynamically set the iframe source -->
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Fetch the ngrok URL from the Flask server
+      document.addEventListener("DOMContentLoaded", function () {
             fetch("http://localhost:8081/ngrok-url")
                 .then(response => response.json())
                 .then(data => {
-                    const ngrokUrl = data.ngrok_url;
-                    const iframe = document.getElementById("feed-iframe");
-                    iframe.src = `${ngrokUrl}/feed`; // Dynamically set the iframe source
+                    if (data.ngrok_url) {
+                        const iframe = document.getElementById("feed-iframe");
+                        iframe.src = `${data.ngrok_url}/feed`;
+                    } else {
+                    console.error("Error: Ngrok URL not found");
+                    }
                 })
                 .catch(error => {
                     console.error("Error fetching ngrok URL:", error);
                 });
-        });
+            });
 
         // Example WebSocket functionality
         const wsInput = document.getElementById("ws-url");
