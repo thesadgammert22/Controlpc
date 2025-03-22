@@ -1,4 +1,4 @@
-const socket = new WebSocket("wss://controlpc.onrender.com");
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your Render WebSocket server URL
 
 socket.onopen = () => {
     console.log("Connected to WebSocket server");
