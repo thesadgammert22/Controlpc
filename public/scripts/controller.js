@@ -1,5 +1,5 @@
 // Establish connection to the WebSocket server
-const socket = new WebSocket("wss://controlpc.onrender.com"); // Your Render-deployed WebSocket server URL
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Your Render WebSocket server URL
 
 // WebSocket connection handlers
 socket.onopen = () => {
@@ -39,7 +39,7 @@ function sendKeyPress(key) {
     }
 }
 
-// Example of connecting these functions to HTML buttons
+// Example: Connect these functions to HTML buttons
 document.getElementById("mouseMoveButton").addEventListener("click", () => {
     sendMouseMove(100, 200); // Example: Move mouse to position (100, 200)
 });
