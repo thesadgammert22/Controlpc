@@ -1,5 +1,5 @@
 // Establish connection to the WebSocket server
-const socket = new WebSocket("wss://controlpc.onrender.com); // Replace with your WebSocket server URL
+const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your WebSocket server URL
 
 // WebSocket connection handlers
 socket.onopen = () => {
