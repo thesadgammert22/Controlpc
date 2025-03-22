@@ -8,7 +8,6 @@ const server = app.listen(3000, () => console.log("Server running on port 3000")
 // Serve static files from the "public" folder
 app.use(express.static(path.join(__dirname, "public")));
 
-
 // WebSocket signaling logic
 const wss = new WebSocket.Server({ server });
 
