@@ -1,9 +1,9 @@
 // Establish connection to the WebSocket server
-const socket = new WebSocket("wss://controlpc.onrender.com"); // Replace with your Render WebSocket server URL
+const socket = new WebSocket("wss://controlpc.onrender.com); // Replace with your WebSocket server URL
 
 // WebSocket connection handlers
 socket.onopen = () => {
-    console.log("Connected to the WebSocket server");
+    console.log("Connected to WebSocket server");
 };
 socket.onerror = (error) => {
     console.error("WebSocket error:", error);
