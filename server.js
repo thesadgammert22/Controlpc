@@ -9,12 +9,13 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
+const FLASK_SERVER = process.env.FLASK_SERVER || "http://localhost:8081"; // Dynamic Flask server address
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the "public" directory
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 // WebSocket handlers
@@ -39,11 +40,11 @@ wss.on("connection", (ws) => {
     });
 });
 
-// Proxy /feed to the Flask server
+// Proxy /feed to Flask server
 app.use(
     "/feed",
     createProxyMiddleware({
-        target: "http://localhost:8081", // Use dynamic Flask port
+        target: FLASK_SERVER,
         changeOrigin: true,
         logLevel: "debug",
     })
