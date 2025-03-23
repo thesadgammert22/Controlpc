@@ -24,13 +24,39 @@
     <script>
         let ws; // WebSocket object
 
-        // Function to connect to WebSocket server
-        document.getElementById("connect-ws").addEventListener("click", () => {
-            const statusElement = document.getElementById("status");
-            statusElement.textContent = "Status: Connecting to WebSocket...";
+        // Function to fetch the Cloudflare Tunnel URL
+        async function fetchTunnelUrl() {
+            try {
+                const response = await fetch('http://localhost:8081/tunnel-url');
+                const data = await response.json();
+                if (response.ok) {
+                    return data.url;
+                } else {
+                    console.error("Error fetching tunnel URL:", data.url);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching tunnel URL:", error);
+                return null;
+            }
+        }
 
-            // Replace with your Cloudflare public WebSocket URL
-            const websocketUrl = "wss://<your-tunnel-url>:8765";
+        // Setup live feed and WebSocket connection
+        async function setupConnection() {
+            const tunnelUrl = await fetchTunnelUrl();
+            if (!tunnelUrl) {
+                alert("Failed to fetch Cloudflare Tunnel URL. Please check the server.");
+                return;
+            }
+
+            // Set the iframe source to the feed URL
+            const feedIframe = document.getElementById("feed-iframe");
+            feedIframe.src = `${tunnelUrl}/feed`;
+
+            // Connect to the WebSocket server
+            const websocketUrl = tunnelUrl.replace("https://", "wss://") + ":8765";
+            const statusElement = document.getElementById("status");
+
             ws = new WebSocket(websocketUrl);
 
             ws.onopen = () => {
@@ -51,11 +77,9 @@
                 console.error("WebSocket error:", error);
                 statusElement.textContent = "Status: Error occurred.";
             };
-        });
+        }
 
-        // Set the iframe source for the live feed
-        const feedUrl = "https://<your-tunnel-url>/feed"; // Replace with your Cloudflare public URL
-        document.getElementById("feed-iframe").src = feedUrl;
+        document.getElementById("connect-ws").addEventListener("click", setupConnection);
     </script>
 </body>
 </html>
