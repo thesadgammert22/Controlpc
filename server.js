@@ -1,37 +1,33 @@
-const express = require('express');
-const http = require('http');
+const fs = require('fs');
+const https = require('https');
 const WebSocket = require('ws');
-const winston = require('winston');
+const express = require('express');
 
-// Logger setup
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.json(),
-    transports: [new winston.transports.Console()],
-});
+// SSL certificates (replace with your actual paths)
+const options = {
+    key: fs.readFileSync('/path/to/your/ssl/key.pem'),  // Path to your private key
+    cert: fs.readFileSync('/path/to/your/ssl/certificate.pem'),  // Path to your certificate
+};
 
-// Create HTTP and WebSocket server
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const httpsServer = https.createServer(options, app);
+const wss = new WebSocket.Server({ server: httpsServer });
 
 app.use(express.json());
-app.use(express.static('public')); // Serve static files
+app.use(express.static('public')); // Serve static files like HTML pages
 
-wss.on('connection', (ws, req) => {
-    logger.info('Client connected');
+wss.on('connection', (ws) => {
+    console.log('Client connected');
 
-    // Handle messages from the client
     ws.on('message', (message) => {
-        logger.info(`Message received: ${message}`);
+        console.log('Message received:', message);
         ws.send(message); // Echo the message back to the client
     });
 
-    // Handle client disconnect
-    ws.on('close', () => logger.info('Client disconnected'));
+    ws.on('close', () => console.log('Client disconnected'));
 });
 
-// Start the HTTP server
-server.listen(8080, () => {
-    logger.info('WebSocket server running on port 8080');
+// Start the HTTPS server
+httpsServer.listen(8080, () => {
+    console.log('Secure WebSocket server running on port 8080');
 });
