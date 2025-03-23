@@ -1,12 +1,23 @@
-const ws = new WebSocket('ws://controlpc.onrender.com:8080'); // Connect to server
+const ws = new WebSocket('ws://controlpc.onrender.com:8080');
 const zlib = require('zlib'); // Compression library
+const winston = require('winston'); // Logging
 
-ws.onopen = () => console.log('Connected to server');
+// Logger configuration
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.json(),
+    transports: [
+        new winston.transports.Console(),
+    ],
+});
+
+ws.onopen = () => logger.info('Connected to server');
+ws.onerror = (err) => logger.error('WebSocket error', { error: err });
 
 // Decompress frames and display them in an iframe
 ws.onmessage = (compressedData) => {
     try {
-        const data = zlib.inflateSync(new Uint8Array(compressedData.data)); // Decompress data
+        const data = zlib.inflateSync(new Uint8Array(compressedData.data));
         const parsedData = JSON.parse(data);
 
         if (parsedData.type === 'frame') {
@@ -14,7 +25,7 @@ ws.onmessage = (compressedData) => {
             videoFeed.src = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(parsedData.data)))}`;
         }
     } catch (err) {
-        console.error('Error decompressing data:', err);
+        logger.error('Error decompressing data', { error: err });
     }
 };
 
