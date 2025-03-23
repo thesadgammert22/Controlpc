@@ -58,19 +58,13 @@ async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
             }
         } catch (error) {
             if (error.response) {
-                // Flask server responded with an error
-                console.error(
-                    `HTTP Error: Status ${error.response.status} - ${error.response.statusText}. Data: ${JSON.stringify(
-                        error.response.data
-                    )}`
-                );
+                console.error(`HTTP Error: Status ${error.response.status} - ${error.response.statusText}.`);
             } else if (error.request) {
-                // No response received from Flask server
-                console.error(`Request Error: No response received from Flask server.`);
-                console.error(`Request Details: ${JSON.stringify(error.request)}`);
+                console.error("Request Error: No response received from Flask server.");
+                console.error(`Request Configuration: Method - ${error.config.method}, URL - ${error.config.url}`);
+                console.error("Request Headers:", error.config.headers);
             } else {
-                // Other errors
-                console.error(`Error: ${error.message}`);
+                console.error(`Unexpected Error: ${error.message}`);
             }
             console.log(`Retrying in ${delay / 1000} seconds...`);
         }
