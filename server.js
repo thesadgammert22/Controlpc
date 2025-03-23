@@ -1,69 +1,39 @@
-const { RTCPeerConnection, RTCSessionDescription } = require("wrtc");
-const axios = require("axios");
-const readline = require("readline");
+const express = require("express");
+const { WebSocketServer } = require("ws");
 
-const SIGNALING_SERVER = "http://localhost:8081";
-let peerConnection;
-let dataChannel;
+const HTTP_PORT = 8080; // HTTP server port
+const WS_PORT = 8765; // WebSocket server port
 
-// Create WebRTC Peer Connection
-async function createWebRTCConnection() {
-    peerConnection = new RTCPeerConnection();
-    dataChannel = peerConnection.createDataChannel("input");
+const app = express(); // Express app for the HTTP server
 
-    // Handle connection state
-    dataChannel.onopen = () => {
-        console.log("WebRTC Data Channel is open!");
-        startSendingInputs();
-    };
+// Start the HTTP server
+app.get("/", (req, res) => res.send("WebSocket server is running!"));
+app.listen(HTTP_PORT, () => {
+    console.log(`HTTP server is running on http://localhost:${HTTP_PORT}`);
+});
 
-    dataChannel.onclose = () => {
-        console.log("WebRTC Data Channel is closed!");
-    };
+// Create the WebSocket server
+const wss = new WebSocketServer({ port: WS_PORT });
+console.log(`WebSocket server is running on ws://localhost:${WS_PORT}`);
 
-    // Create an SDP offer
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
+// Handle WebSocket connections
+wss.on("connection", (ws) => {
+    console.log("Client connected!");
 
-    // Send offer to Flask signaling server
-    const response = await axios.post(`${SIGNALING_SERVER}/offer`, {
-        peer_id: "client1",
-        sdp: offer.sdp
+    // Handle incoming messages from clients
+    ws.on("message", (message) => {
+        console.log("Received:", message);
+
+        // Broadcast the message to all connected clients
+        wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === client.OPEN) {
+                client.send(message);
+            }
+        });
     });
 
-    const answer = response.data;
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-    console.log("WebRTC connection established!");
-}
-
-// Simulate sending mouse inputs
-function startSendingInputs() {
-    console.log("Start sending inputs. Press 'q' to quit.");
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
+    // Handle connection close
+    ws.on("close", () => {
+        console.log("Client disconnected!");
     });
-
-    rl.on("line", (line) => {
-        if (line === "q") {
-            closeConnection();
-            rl.close();
-        } else {
-            // Example input: sending mouse coordinates
-            const mouseInput = { x: Math.random() * 1000, y: Math.random() * 1000 };
-            dataChannel.send(JSON.stringify(mouseInput));
-            console.log("Sent input:", mouseInput);
-        }
-    });
-}
-
-// Close the connection
-async function closeConnection() {
-    console.log("Closing connection...");
-    await axios.post(`${SIGNALING_SERVER}/close`, { peer_id: "client1" });
-    peerConnection.close();
-    process.exit(0);
-}
-
-// Start the WebRTC connection
-createWebRTCConnection().catch(console.error);
+});
