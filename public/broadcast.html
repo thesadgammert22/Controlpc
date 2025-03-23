@@ -25,7 +25,7 @@
         let ws; // WebSocket object
 
         // Function to fetch the Cloudflare Tunnel URL
-        async function fetchTunnelUrl() {
+        async function fetchTunnelUrl(retryCount = 5) {
             try {
                 const response = await fetch('http://localhost:8081/tunnel-url');
                 const data = await response.json();
@@ -33,6 +33,11 @@
                     return data.url;
                 } else {
                     console.error("Error fetching tunnel URL:", data.url);
+                    if (retryCount > 0) {
+                        console.log(`Retrying... (${retryCount} attempts left)`);
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+                        return fetchTunnelUrl(retryCount - 1);
+                    }
                     return null;
                 }
             } catch (error) {
