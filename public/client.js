@@ -1,4 +1,4 @@
-const ws = new WebSocket('wss://controlpc.onrender.com:8080'); // Use WSS for secure connection
+const ws = new WebSocket('ws://controlpc.onrender.com:8080'); // Use ws:// for insecure connection
 
 ws.onopen = () => {
     console.log('Connected to server');
