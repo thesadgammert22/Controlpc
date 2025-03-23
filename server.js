@@ -46,33 +46,35 @@ async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`Fetching Flask server URL (Attempt ${attempt}/${maxRetries})...`);
-            const response = await axios.get("http://localhost:8081/tunnel-url"); // Flask's endpoint for tunnel URL
+            const response = await axios.get("http://localhost:8081/tunnel-url", {
+                timeout: 5000, // Set a timeout of 5 seconds
+            });
             if (response.status === 200 && response.data.url) {
                 FLASK_SERVER = response.data.url;
                 console.log(`Dynamic FLASK_SERVER URL fetched: ${FLASK_SERVER}`);
-                return; // Exit after successfully fetching the URL
+                return;
             } else {
-                console.log(`Flask server not ready (Attempt ${attempt}). Response:`, response.data);
+                console.log(`Unexpected response from Flask server: ${JSON.stringify(response.data)}`);
             }
         } catch (error) {
-            // Enhanced error handling
             if (error.response) {
-                // HTTP response error from Flask
+                // Flask server responded with an error
                 console.error(
                     `HTTP Error: Status ${error.response.status} - ${error.response.statusText}. Data: ${JSON.stringify(
                         error.response.data
                     )}`
                 );
             } else if (error.request) {
-                // No response received
-                console.error(`Request Error: No response received from Flask server. Axios request: ${error.request}`);
+                // No response received from Flask server
+                console.error(`Request Error: No response received from Flask server.`);
+                console.error(`Request Details: ${JSON.stringify(error.request)}`);
             } else {
                 // Other errors
                 console.error(`Error: ${error.message}`);
             }
+            console.log(`Retrying in ${delay / 1000} seconds...`);
         }
 
-        console.log(`Retrying in ${delay / 1000} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
     }
 
