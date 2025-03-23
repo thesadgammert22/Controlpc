@@ -42,29 +42,29 @@ wss.on("connection", (ws) => {
 });
 
 // Function to fetch the dynamic Flask server URL
-async function fetchFlaskServerUrl(retryCount = 5) {
-    while (retryCount > 0) {
+async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            console.log("Fetching Flask server URL...");
+            console.log(`Attempting to fetch Flask server URL (Attempt ${attempt}/${maxRetries})...`);
             const response = await axios.get("http://localhost:8081/tunnel-url"); // Flask's endpoint for tunnel URL
             if (response.status === 200 && response.data.url) {
                 FLASK_SERVER = response.data.url; // Set the dynamic URL
                 console.log(`Dynamic FLASK_SERVER URL fetched: ${FLASK_SERVER}`);
                 return; // Exit the function after successful fetch
             } else {
-                throw new Error("Failed to fetch Flask server URL from /tunnel-url.");
+                throw new Error("Flask server not ready yet.");
             }
         } catch (error) {
             console.error(`Error fetching Flask server URL: ${error.message}`);
-            retryCount -= 1;
-            console.log(`Retrying... (${retryCount} attempts left)`);
-            await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+            if (attempt < maxRetries) {
+                console.log(`Retrying in ${delay / 1000} seconds...`);
+                await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
+            } else {
+                console.error("Max retries reached. Flask server is unavailable.");
+                process.exit(1); // Exit if URL cannot be fetched
+            }
         }
     }
-
-    // Exit if URL could not be fetched after retries
-    console.error("Failed to fetch Flask server URL after multiple attempts.");
-    process.exit(1);
 }
 
 // Initialize the server after fetching the Flask server URL
