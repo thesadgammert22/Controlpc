@@ -1,105 +1,69 @@
-const express = require("express");
-const http = require("http");
-const WebSocket = require("ws");
-const path = require("path");
-const bodyParser = require("body-parser");
-const { createProxyMiddleware } = require("http-proxy-middleware");
-const axios = require("axios"); // Axios for HTTP requests
+const { RTCPeerConnection, RTCSessionDescription } = require("wrtc");
+const axios = require("axios");
+const readline = require("readline");
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const SIGNALING_SERVER = "http://localhost:8081";
+let peerConnection;
+let dataChannel;
 
-const PORT = process.env.PORT || 10000;
-let FLASK_SERVER = null; // Dynamic Flask server URL
+// Create WebRTC Peer Connection
+async function createWebRTCConnection() {
+    peerConnection = new RTCPeerConnection();
+    dataChannel = peerConnection.createDataChannel("input");
 
-// Middleware to parse form data
-app.use(bodyParser.urlencoded({ extended: true }));
+    // Handle connection state
+    dataChannel.onopen = () => {
+        console.log("WebRTC Data Channel is open!");
+        startSendingInputs();
+    };
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
+    dataChannel.onclose = () => {
+        console.log("WebRTC Data Channel is closed!");
+    };
 
-// WebSocket handlers
-wss.on("connection", (ws) => {
-    console.log("WebSocket connection established");
+    // Create an SDP offer
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
 
-    ws.on("message", (message) => {
-        console.log(`Received: ${message}`);
-        wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(message);
-            }
-        });
+    // Send offer to Flask signaling server
+    const response = await axios.post(`${SIGNALING_SERVER}/offer`, {
+        peer_id: "client1",
+        sdp: offer.sdp
     });
 
-    ws.on("close", (code, reason) => {
-        console.log(`WebSocket connection closed: ${code}, Reason: ${reason}`);
-    });
-
-    ws.on("error", (error) => {
-        console.error(`WebSocket error: ${error.message}`);
-    });
-});
-
-// Function to fetch the Flask server's Cloudflare Tunnel URL
-async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`Fetching Flask server URL (Attempt ${attempt}/${maxRetries})...`);
-            const response = await axios.get("http://localhost:8081/tunnel-url", {
-                timeout: 5000, // Set a timeout of 5 seconds
-            });
-            if (response.status === 200 && response.data.url) {
-                FLASK_SERVER = response.data.url;
-                console.log(`Dynamic FLASK_SERVER URL fetched: ${FLASK_SERVER}`);
-                return;
-            } else {
-                console.log(`Unexpected response from Flask server: ${JSON.stringify(response.data)}`);
-            }
-        } catch (error) {
-            if (error.response) {
-                console.error(`HTTP Error: Status ${error.response.status} - ${error.response.statusText}.`);
-            } else if (error.request) {
-                console.error("Request Error: No response received from Flask server.");
-                console.error(`Request Configuration: Method - ${error.config.method}, URL - ${error.config.url}`);
-                console.error("Request Headers:", error.config.headers);
-            } else {
-                console.error(`Unexpected Error: ${error.message}`);
-            }
-            console.log(`Retrying in ${delay / 1000} seconds...`);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
-    }
-
-    console.error("Max retries reached. Flask server is unavailable.");
-    process.exit(1); // Exit if URL cannot be fetched
+    const answer = response.data;
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    console.log("WebRTC connection established!");
 }
 
-// Initialize the server after fetching the Flask server URL
-fetchFlaskServerUrl().then(() => {
-    // Proxy /feed requests to the dynamically fetched Flask server URL
-    app.use(
-    "/feed",
-    createProxyMiddleware({
-        target: FLASK_SERVER,
-        changeOrigin: true,
-        logLevel: "debug", // Enable detailed logging for debugging
-        onError: (err, req, res) => {
-            console.error(`Proxy Error: ${err.message}`);
-            res.status(500).send("Proxy encountered an error.");
-        },
-        onProxyReq: (proxyReq, req, res) => {
-            console.log(`Proxy Request Headers: ${JSON.stringify(proxyReq.getHeaders())}`);
-        },
-        onProxyRes: (proxyRes, req, res) => {
-            console.log(`Proxy Response Headers: ${JSON.stringify(proxyRes.headers)}`);
-        },
-    })
-);
-
-    // Start the Express server
-    server.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
+// Simulate sending mouse inputs
+function startSendingInputs() {
+    console.log("Start sending inputs. Press 'q' to quit.");
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
     });
-});
+
+    rl.on("line", (line) => {
+        if (line === "q") {
+            closeConnection();
+            rl.close();
+        } else {
+            // Example input: sending mouse coordinates
+            const mouseInput = { x: Math.random() * 1000, y: Math.random() * 1000 };
+            dataChannel.send(JSON.stringify(mouseInput));
+            console.log("Sent input:", mouseInput);
+        }
+    });
+}
+
+// Close the connection
+async function closeConnection() {
+    console.log("Closing connection...");
+    await axios.post(`${SIGNALING_SERVER}/close`, { peer_id: "client1" });
+    peerConnection.close();
+    process.exit(0);
+}
+
+// Start the WebRTC connection
+createWebRTCConnection().catch(console.error);
