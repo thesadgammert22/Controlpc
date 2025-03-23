@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const authMiddleware = require('./auth'); // For authentication
+const zlib = require('zlib');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,22 +10,31 @@ const wss = new WebSocket.Server({ server });
 app.use(express.json()); // Parse JSON bodies
 app.use(express.static('public')); // Serve static files like HTML pages
 
-// Authentication route
-app.post('/auth', authMiddleware, (req, res) => {
-    res.sendStatus(200);
-});
-
-// WebSocket handling
 wss.on('connection', (ws) => {
-    ws.on('message', (message) => {
-        const data = JSON.parse(message);
+    ws.on('message', (compressedData) => {
+        // Decompress received data
+        try {
+            const data = zlib.inflateSync(compressedData);
+            const parsedData = JSON.parse(data);
 
-        // Forward data to all other clients
-        wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(data));
+            if (parsedData.type === 'frame') {
+                // Broadcast frame to all clients
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(compressedData); // Broadcast compressed frame
+                    }
+                });
+            } else if (parsedData.type === 'input') {
+                // Broadcast input to all controlled PCs
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(data);
+                    }
+                });
             }
-        });
+        } catch (err) {
+            console.error('Error decompressing data:', err);
+        }
     });
 });
 
