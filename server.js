@@ -1,56 +1,42 @@
-const express = require('express');
-const http = require('http');
+const fs = require('fs');
+const https = require('https');
 const WebSocket = require('ws');
-const zlib = require('zlib');
-const winston = require('winston'); // Logging
+const express = require('express');
+const winston = require('winston');
 
-// Logger configuration
+// SSL certificates (replace with your own files)
+const options = {
+    key: fs.readFileSync('/path/to/your/ssl/key.pem'),  // Path to your private key
+    cert: fs.readFileSync('/path/to/your/ssl/certificate.pem'),  // Path to your certificate
+};
+
+// Logger setup
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
-    transports: [
-        new winston.transports.Console(), // Log to console
-    ],
+    transports: [new winston.transports.Console()],
 });
 
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const httpsServer = https.createServer(options, app);
+const wss = new WebSocket.Server({ server: httpsServer });
 
 app.use(express.json());
-app.use(express.static('public')); // Serve static files like HTML pages
+app.use(express.static('public')); // Serve static files
 
 wss.on('connection', (ws) => {
-    logger.info('New WebSocket connection established');
+    logger.info('Client connected');
 
-    ws.on('message', (compressedData) => {
-        try {
-            const data = zlib.inflateSync(compressedData);
-            const parsedData = JSON.parse(data);
-
-            if (parsedData.type === 'frame') {
-                // Broadcast compressed frame to all clients
-                wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN) {
-                        client.send(compressedData);
-                    }
-                });
-            } else if (parsedData.type === 'input') {
-                // Broadcast input to all controlled PCs
-                wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN) {
-                        client.send(data);
-                    }
-                });
-            }
-        } catch (err) {
-            logger.error('Error decompressing data', { error: err });
-        }
+    ws.on('message', (message) => {
+        logger.info(`Message received: ${message}`);
+        // Echo the message back to the client
+        ws.send(message);
     });
 
-    ws.on('close', () => logger.info('WebSocket connection closed'));
+    ws.on('close', () => logger.info('Client disconnected'));
 });
 
-server.listen(8080, () => {
-    logger.info('Server running on port 8080');
+// Start the HTTPS server
+httpsServer.listen(8080, () => {
+    logger.info('Secure WebSocket server running on port 8080');
 });
