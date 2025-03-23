@@ -86,23 +86,23 @@ async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
 fetchFlaskServerUrl().then(() => {
     // Proxy /feed requests to the dynamically fetched Flask server URL
     app.use(
-        "/feed",
-        createProxyMiddleware({
-            target: FLASK_SERVER,
-            changeOrigin: true,
-            logLevel: "debug", // Enable detailed logging for debugging
-            onError: (err, req, res) => {
-                console.error(`Proxy Error: ${err.message}`);
-                res.status(500).send("Proxy encountered an error.");
-            },
-            onProxyReq: (proxyReq, req, res) => {
-                console.log(`Proxy Request Headers: ${JSON.stringify(proxyReq.headers)}`);
-            },
-            onProxyRes: (proxyRes, req, res) => {
-                console.log(`Proxy Response Headers: ${JSON.stringify(proxyRes.headers)}`);
-            },
-        })
-    );
+    "/feed",
+    createProxyMiddleware({
+        target: FLASK_SERVER,
+        changeOrigin: true,
+        logLevel: "debug", // Enable detailed logging for debugging
+        onError: (err, req, res) => {
+            console.error(`Proxy Error: ${err.message}`);
+            res.status(500).send("Proxy encountered an error.");
+        },
+        onProxyReq: (proxyReq, req, res) => {
+            console.log(`Proxy Request Headers: ${JSON.stringify(proxyReq.getHeaders())}`);
+        },
+        onProxyRes: (proxyRes, req, res) => {
+            console.log(`Proxy Response Headers: ${JSON.stringify(proxyRes.headers)}`);
+        },
+    })
+);
 
     // Start the Express server
     server.listen(PORT, () => {
