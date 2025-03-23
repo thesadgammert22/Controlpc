@@ -42,23 +42,32 @@ wss.on("connection", (ws) => {
 });
 
 // Function to fetch the dynamic Flask server URL
-async function fetchFlaskServerUrl() {
-    try {
-        console.log("Fetching Flask server URL...");
-        const response = await axios.get("http://localhost:8081/tunnel-url"); // Adjust if Flask runs elsewhere
-        if (response.status === 200 && response.data.url) {
-            FLASK_SERVER = response.data.url; // Set the dynamic URL
-            console.log(`Dynamic FLASK_SERVER URL fetched: ${FLASK_SERVER}`);
-        } else {
-            throw new Error("Failed to fetch Flask server URL from /tunnel-url.");
+async function fetchFlaskServerUrl(retryCount = 5) {
+    while (retryCount > 0) {
+        try {
+            console.log("Fetching Flask server URL...");
+            const response = await axios.get("http://localhost:8081/tunnel-url"); // Flask's endpoint for tunnel URL
+            if (response.status === 200 && response.data.url) {
+                FLASK_SERVER = response.data.url; // Set the dynamic URL
+                console.log(`Dynamic FLASK_SERVER URL fetched: ${FLASK_SERVER}`);
+                return; // Exit the function after successful fetch
+            } else {
+                throw new Error("Failed to fetch Flask server URL from /tunnel-url.");
+            }
+        } catch (error) {
+            console.error(`Error fetching Flask server URL: ${error.message}`);
+            retryCount -= 1;
+            console.log(`Retrying... (${retryCount} attempts left)`);
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
         }
-    } catch (error) {
-        console.error("Error fetching Flask server URL:", error.message);
-        process.exit(1); // Exit the process if fetching the URL fails
     }
+
+    // Exit if URL could not be fetched after retries
+    console.error("Failed to fetch Flask server URL after multiple attempts.");
+    process.exit(1);
 }
 
-// Wait for the Flask server URL to be fetched before starting the server
+// Initialize the server after fetching the Flask server URL
 fetchFlaskServerUrl().then(() => {
     // Proxy /feed requests to the dynamically fetched Flask server
     app.use(
