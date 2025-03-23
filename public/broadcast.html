@@ -8,7 +8,7 @@
 <body>
     <h1>Remote Control Interface</h1>
 
-    <!-- Connect WebSocket -->
+    <!-- WebSocket Status -->
     <div>
         <h2>WebSocket Connection</h2>
         <button id="connect-ws">Connect to WebSocket</button>
@@ -29,38 +29,33 @@
             const statusElement = document.getElementById("status");
             statusElement.textContent = "Status: Connecting to WebSocket...";
 
-            // Replace the URL with your WebSocket server address if different
-            const wsUrl = "ws://localhost:8765"; // Change to public-facing WebSocket URL if needed
-            ws = new WebSocket(wsUrl);
+            // Replace with your Cloudflare public WebSocket URL
+            const websocketUrl = "wss://<your-tunnel-url>:8765";
+            ws = new WebSocket(websocketUrl);
 
             ws.onopen = () => {
                 console.log("WebSocket connection established");
-                statusElement.textContent = "Status: WebSocket connected!";
-                alert("WebSocket connection established!");
+                statusElement.textContent = "Status: Connected!";
             };
 
             ws.onmessage = (event) => {
                 console.log("Received message:", event.data);
-
-                // Parse ngrok URL from WebSocket message
-                if (event.data.startsWith("NGROK_URL::")) {
-                    const ngrokUrl = event.data.split("::")[1];
-                    const iframe = document.getElementById("feed-iframe");
-                    iframe.src = `${ngrokUrl}/feed`; // Set iframe source dynamically
-                    statusElement.textContent = "Status: Connected to feed!";
-                }
             };
 
             ws.onclose = () => {
                 console.log("WebSocket connection closed");
-                statusElement.textContent = "Status: WebSocket disconnected.";
+                statusElement.textContent = "Status: Disconnected.";
             };
 
             ws.onerror = (error) => {
                 console.error("WebSocket error:", error);
-                statusElement.textContent = "Status: WebSocket error occurred.";
+                statusElement.textContent = "Status: Error occurred.";
             };
         });
+
+        // Set the iframe source for the live feed
+        const feedUrl = "https://<your-tunnel-url>/feed"; // Replace with your Cloudflare public URL
+        document.getElementById("feed-iframe").src = feedUrl;
     </script>
 </body>
 </html>
