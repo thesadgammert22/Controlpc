@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
 });
 
 // Function to fetch the Flask server's Cloudflare Tunnel URL
-async function fetchFlaskServerUrl(maxRetries = 15, delay = 2000) {
+async function fetchFlaskServerUrl(maxRetries = 10, delay = 2000) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`Fetching Flask server URL (Attempt ${attempt}/${maxRetries})...`);
@@ -55,7 +55,21 @@ async function fetchFlaskServerUrl(maxRetries = 15, delay = 2000) {
                 console.log(`Flask server not ready (Attempt ${attempt}). Response:`, response.data);
             }
         } catch (error) {
-            console.error(`Error fetching Flask server URL: ${error.message}`);
+            // Enhanced error handling
+            if (error.response) {
+                // HTTP response error from Flask
+                console.error(
+                    `HTTP Error: Status ${error.response.status} - ${error.response.statusText}. Data: ${JSON.stringify(
+                        error.response.data
+                    )}`
+                );
+            } else if (error.request) {
+                // No response received
+                console.error(`Request Error: No response received from Flask server. Axios request: ${error.request}`);
+            } else {
+                // Other errors
+                console.error(`Error: ${error.message}`);
+            }
         }
 
         console.log(`Retrying in ${delay / 1000} seconds...`);
@@ -74,7 +88,17 @@ fetchFlaskServerUrl().then(() => {
         createProxyMiddleware({
             target: FLASK_SERVER,
             changeOrigin: true,
-            logLevel: "debug",
+            logLevel: "debug", // Enable detailed logging for debugging
+            onError: (err, req, res) => {
+                console.error(`Proxy Error: ${err.message}`);
+                res.status(500).send("Proxy encountered an error.");
+            },
+            onProxyReq: (proxyReq, req, res) => {
+                console.log(`Proxy Request Headers: ${JSON.stringify(proxyReq.headers)}`);
+            },
+            onProxyRes: (proxyRes, req, res) => {
+                console.log(`Proxy Response Headers: ${JSON.stringify(proxyRes.headers)}`);
+            },
         })
     );
 
