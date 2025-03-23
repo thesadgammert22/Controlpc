@@ -12,12 +12,12 @@ ws.onmessage = (event) => {
     }
 };
 
-// Mouse movement
+// Send mouse input
 document.addEventListener('mousemove', (event) => {
     ws.send(JSON.stringify({ type: 'input', inputType: 'mouse', x: event.clientX, y: event.clientY }));
 });
 
-// Key presses
+// Send keyboard input
 document.addEventListener('keydown', (event) => {
     ws.send(JSON.stringify({ type: 'input', inputType: 'keyboard', key: event.key }));
 });
