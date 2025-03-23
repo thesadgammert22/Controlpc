@@ -1,23 +1,33 @@
-const ws = new WebSocket('ws://controlpc.onrender.com:8080');
+const ws = new WebSocket('ws://controlpc.onrender.com:8080'); // Connect to server
+const zlib = require('zlib'); // Compression library
 
-ws.onopen = () => {
-    console.log('Connected to server');
-};
+ws.onopen = () => console.log('Connected to server');
 
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'frame') {
-        const videoFeed = document.querySelector('#video-feed');
-        videoFeed.src = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(data.data)))}`;
+// Decompress frames and display them in an iframe
+ws.onmessage = (compressedData) => {
+    try {
+        const data = zlib.inflateSync(new Uint8Array(compressedData.data)); // Decompress data
+        const parsedData = JSON.parse(data);
+
+        if (parsedData.type === 'frame') {
+            const videoFeed = document.querySelector('#video-feed');
+            videoFeed.src = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(parsedData.data)))}`;
+        }
+    } catch (err) {
+        console.error('Error decompressing data:', err);
     }
 };
 
-// Send mouse input
+// Capture and send mouse input
 document.addEventListener('mousemove', (event) => {
-    ws.send(JSON.stringify({ type: 'input', inputType: 'mouse', x: event.clientX, y: event.clientY }));
+    const inputData = JSON.stringify({ type: 'input', inputType: 'mouse', x: event.clientX, y: event.clientY });
+    const compressedInput = zlib.deflateSync(inputData);
+    ws.send(compressedInput);
 });
 
-// Send keyboard input
+// Capture and send keyboard input
 document.addEventListener('keydown', (event) => {
-    ws.send(JSON.stringify({ type: 'input', inputType: 'keyboard', key: event.key }));
+    const inputData = JSON.stringify({ type: 'input', inputType: 'keyboard', key: event.key });
+    const compressedInput = zlib.deflateSync(inputData);
+    ws.send(compressedInput);
 });
