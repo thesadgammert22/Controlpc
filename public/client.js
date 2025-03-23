@@ -5,13 +5,17 @@ ws.onopen = () => {
 };
 
 ws.onmessage = (event) => {
-    console.log('Received:', event.data);
+    const data = JSON.parse(event.data);
+    if (data.type === 'frame') {
+        const videoFeed = document.querySelector('#video-feed');
+        videoFeed.src = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(data.data)))}`;
+    }
 };
 
 document.addEventListener('mousemove', (event) => {
-    ws.send(JSON.stringify({ type: 'mouse', x: event.clientX, y: event.clientY }));
+    ws.send(JSON.stringify({ type: 'input', inputType: 'mouse', x: event.clientX, y: event.clientY }));
 });
 
 document.addEventListener('keydown', (event) => {
-    ws.send(JSON.stringify({ type: 'keyboard', key: event.key }));
+    ws.send(JSON.stringify({ type: 'input', inputType: 'keyboard', key: event.key }));
 });
