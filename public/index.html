@@ -28,17 +28,38 @@
     <script>
         const AUTH_TOKEN = "hardcoded_auth_token_123";
 
-        // Function to connect to the WebSocket and send mouse/keyboard input
+        // Function to fetch the LocalTunnel URL and embed it in an iframe
+        async function loadIframe() {
+            const iframeContainer = document.getElementById('iframe-container');
+            try {
+                // Fetch the public URL served from the Python LocalTunnel script
+                const response = await fetch('/ngrok-url'); // Replace `/ngrok-url` with the appropriate LocalTunnel endpoint
+                const data = await response.json();
+
+                // Embed the public URL in an iframe
+                iframeContainer.innerHTML = `<iframe src="${data.url}" allowfullscreen></iframe>`;
+            } catch (error) {
+                console.error("Failed to load the remote control interface:", error);
+                iframeContainer.innerHTML = `<p>Error loading remote interface. Please check the server.</p>`;
+            }
+        }
+
+        // WebSocket setup for mouse and keyboard input
         async function setupWebSocket() {
             try {
-                // Use the WebSocket server address here (e.g., replace `ws://localhost:8080` if necessary)
-                const wsUrl = 'ws://localhost:8080';
-                const ws = new WebSocket(wsUrl);
+                const response = await fetch('/ngrok-url'); // Replace `/ngrok-url` with your API endpoint
+                const { url } = await response.json();
+
+                // Use the WebSocket link with "wss://"
+                const wsUrl = url.replace('http', 'ws');
+                const ws = new WebSocket(wsUrl, [], {
+                    headers: {
+                        Authorization: `Bearer ${AUTH_TOKEN}`
+                    }
+                });
 
                 ws.onopen = () => {
                     console.log("Connected to the WebSocket server.");
-                    // Send an authentication token (if applicable)
-                    ws.send(JSON.stringify({ type: "auth", token: AUTH_TOKEN }));
                 };
 
                 ws.onmessage = (event) => {
@@ -72,7 +93,8 @@
             }
         }
 
-        // Start the WebSocket connection
+        // Load the iframe and WebSocket connection
+        loadIframe();
         setupWebSocket();
     </script>
 </body>
