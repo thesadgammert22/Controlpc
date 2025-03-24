@@ -1,103 +1,92 @@
-import asyncio
-import json
-import mss
-import websockets
-import pyautogui
-import subprocess  # For running LocalTunnel
-from pynput.mouse import Controller as MouseController, Controller as KeyboardController
+const express = require('express');
+const WebSocket = require('ws');
+const http = require('http');
+const { spawn } = require('child_process'); // To run LocalTunnel
+const path = require('path');
 
-# Mouse and keyboard controllers
-mouse = MouseController()
-keyboard = KeyboardController()
+// Configuration
+const PORT = 8080; // Local WebSocket server port
+const AUTH_TOKEN = "hardcoded_auth_token_123"; // Authentication token
 
-# Local server configuration
-LOCAL_SERVER_PORT = 8080
-AUTH_TOKEN = "hardcoded_auth_token_123"  # Replace with your token
+let localTunnelUrl = ""; // Placeholder for the LocalTunnel URL
 
-# Start LocalTunnel and get the public URL
-async def start_localtunnel(port):
-    try:
-        print("Starting LocalTunnel...")
-        process = await asyncio.create_subprocess_exec(
-            "lt", "--port", str(port), "--print-requests",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        await asyncio.sleep(2)  # Wait for LocalTunnel to initialize
+// Start LocalTunnel and retrieve the public URL
+function startLocalTunnel(port) {
+    return new Promise((resolve, reject) => {
+        console.log("Starting LocalTunnel...");
+        const ltProcess = spawn('lt', ['--port', port]);
 
-        # Capture and parse the public URL from LocalTunnel's output
-        public_url = None
-        while True:
-            line = await process.stdout.readline()
-            if line:
-                decoded_line = line.decode().strip()
-                if decoded_line.startswith("your url is:"):
-                    public_url = decoded_line.split(": ")[1]
-                    break
-            else:
-                break
-        return public_url, process
-    except Exception as e:
-        print(f"Error starting LocalTunnel: {e}")
-        return None, None
+        ltProcess.stdout.on('data', (data) => {
+            const output = data.toString();
+            if (output.includes('https://')) {
+                const matches = output.match(/https:\/\/[^\s]+/);
+                if (matches) {
+                    localTunnelUrl = matches[0];
+                    console.log(`LocalTunnel URL: ${localTunnelUrl}`);
+                    resolve(localTunnelUrl);
+                }
+            }
+        });
 
-# Handle WebSocket client connections
-async def handle_connection(websocket, path):
-    try:
-        # Authenticate the client
-        auth_header = websocket.request_headers.get("Authorization")
-        if auth_header != f"Bearer {AUTH_TOKEN}":
-            await websocket.close(code=4003, reason="Invalid Authorization Token")
-            print("Client disconnected: Invalid Authorization")
-            return
+        ltProcess.stderr.on('data', (data) => {
+            console.error(`LocalTunnel error: ${data.toString()}`);
+        });
 
-        print("Client connected")
-        async for message in websocket:
-            data = json.loads(message)
-            if data.get("type") == "input":
-                # Handle mouse and keyboard inputs
-                if data.get("inputType") == "mouse":
-                    mouse.position = (data["x"], data["y"])
-                elif data.get("inputType") == "keyboard":
-                    key = data["key"]
-                    keyboard.press(key)
-                    keyboard.release(key)
-    except websockets.ConnectionClosed as e:
-        print(f"Connection closed: {e.code} - {e.reason}")
+        ltProcess.on('exit', (code) => {
+            if (code !== 0) {
+                reject(`LocalTunnel exited with code ${code}`);
+            }
+        });
+    });
+}
 
-# Capture the screen and send frames to connected clients
-async def capture_screen(websocket):
-    with mss.mss() as sct:
-        monitor = sct.monitors[1]  # Capture the primary monitor
-        while True:
-            # Capture the screen
-            screenshot = sct.grab(monitor)
-            # Compress the screenshot and send it as a frame
-            frame_data = mss.tools.to_png(screenshot.rgb, screenshot.size)
-            await websocket.send(json.dumps({"type": "frame", "data": frame_data.hex()}))
-            await asyncio.sleep(0.05)  # ~20 FPS
+// Set up Express for serving HTML and handling API requests
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-# Run the WebSocket server
-async def run_server(port):
-    async with websockets.serve(handle_connection, "0.0.0.0", port):
-        print(f"WebSocket server running on ws://0.0.0.0:{port}")
-        await asyncio.Future()  # Run forever
+// Serve static HTML files
+app.use(express.static(path.join(__dirname, 'public')));
 
-# Main entry point
-async def main():
-    print(f"Starting WebSocket server on port {LOCAL_SERVER_PORT}...")
-    # Start LocalTunnel and retrieve the public URL
-    public_url, lt_process = await start_localtunnel(LOCAL_SERVER_PORT)
-    if not public_url:
-        print("Failed to start LocalTunnel. Exiting...")
-        return
+// Endpoint to get the LocalTunnel public URL
+app.get('/localtunnel-url', (req, res) => {
+    if (!localTunnelUrl) {
+        return res.status(500).send("LocalTunnel URL not available yet.");
+    }
+    res.json({ url: localTunnelUrl });
+});
 
-    print(f"Public URL: {public_url}")
-    print(f"Embed this URL in your iframe: {public_url}")
+// Handle WebSocket connections
+wss.on('connection', (ws, req) => {
+    // Verify authentication token
+    const authHeader = req.headers['authorization'];
+    if (authHeader !== `Bearer ${AUTH_TOKEN}`) {
+        ws.close(4003, 'Unauthorized');
+        console.log("Unauthorized connection attempt.");
+        return;
+    }
 
-    # Run the WebSocket server
-    server_task = asyncio.create_task(run_server(LOCAL_SERVER_PORT))
-    await server_task  # Run forever
+    console.log('Client connected.');
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    ws.on('message', (message) => {
+        const data = JSON.parse(message);
+        if (data.type === 'input') {
+            console.log(`Received input: ${JSON.stringify(data)}`);
+            // Add logic to simulate mouse and keyboard input on the controlled PC
+        }
+    });
+
+    ws.on('close', () => {
+        console.log('Client disconnected.');
+    });
+});
+
+// Start server and LocalTunnel
+server.listen(PORT, async () => {
+    console.log(`WebSocket server running on http://localhost:${PORT}`);
+    try {
+        await startLocalTunnel(PORT);
+    } catch (error) {
+        console.error("Failed to start LocalTunnel:", error);
+    }
+});
