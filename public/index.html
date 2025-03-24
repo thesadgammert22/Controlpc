@@ -32,8 +32,7 @@
         async function loadIframe() {
             const iframeContainer = document.getElementById('iframe-container');
             try {
-                // Fetch the public URL served from the Python LocalTunnel script
-                const response = await fetch('/ngrok-url'); // Replace `/ngrok-url` with the appropriate LocalTunnel endpoint
+                const response = await fetch('/localtunnel-url'); // Endpoint served by the server
                 const data = await response.json();
 
                 // Embed the public URL in an iframe
@@ -47,23 +46,17 @@
         // WebSocket setup for mouse and keyboard input
         async function setupWebSocket() {
             try {
-                const response = await fetch('/ngrok-url'); // Replace `/ngrok-url` with your API endpoint
+                const response = await fetch('/localtunnel-url');
                 const { url } = await response.json();
+                const wsUrl = url.replace('https', 'wss'); // Replace protocol for secure WebSocket
 
-                // Use the WebSocket link with "wss://"
-                const wsUrl = url.replace('http', 'ws');
-                const ws = new WebSocket(wsUrl, [], {
-                    headers: {
-                        Authorization: `Bearer ${AUTH_TOKEN}`
-                    }
-                });
-
+                const ws = new WebSocket(wsUrl);
                 ws.onopen = () => {
-                    console.log("Connected to the WebSocket server.");
+                    console.log("Connected to WebSocket server.");
                 };
 
                 ws.onmessage = (event) => {
-                    console.log("Message from the server:", event.data);
+                    console.log("Message from server:", event.data);
                 };
 
                 ws.onerror = (error) => {
@@ -93,9 +86,8 @@
             }
         }
 
-        // Load the iframe and WebSocket connection
-        loadIframe();
-        setupWebSocket();
+        loadIframe(); // Load iframe with LocalTunnel URL
+        setupWebSocket(); // Connect WebSocket
     </script>
 </body>
 </html>
