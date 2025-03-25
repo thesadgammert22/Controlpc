@@ -15,12 +15,10 @@ app.post('/api/update-tunnel', (req, res) => {
     }
 
     currentTunnelUrl = tunnel_url; // Save the tunnel URL
-    console.log(`Received Tunnel URL (password): ${currentTunnelUrl}`); // Log it to the console
+    console.log(`Received Tunnel URL (password): ${currentTunnelUrl}`); // Log the URL to the console
 
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
-
-
 
 // Serve the broadcasting page
 app.get('/', (req, res) => {
@@ -59,8 +57,7 @@ app.get('/', (req, res) => {
     res.send(pageContent);
 });
 
-
-// Start the server
+// Start the server on port 4000
 const PORT = process.env.PORT || 4200;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
