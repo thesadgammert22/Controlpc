@@ -7,21 +7,22 @@ let currentTunnelUrl = ''; // Store the current tunnel URL
 
 // API endpoint to update the tunnel URL
 app.post('/api/update-tunnel', (req, res) => {
-    const { tunnel_url } = req.body;
+    const { tunnel_url } = req.body; // Extract the tunnel URL from the POST request body
 
     if (!tunnel_url) {
-        return res.status(400).json({ error: 'Tunnel URL is required.' });
+        return res.status(400).json({ error: 'Tunnel URL is required.' }); // Handle missing data
     }
 
-    currentTunnelUrl = tunnel_url; // Update the current tunnel URL
+    currentTunnelUrl = tunnel_url; // Save the tunnel URL globally
     console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' }); // Send success response
 });
+
 
 // Serve the broadcasting page
 app.get('/', (req, res) => {
     if (!currentTunnelUrl) {
-        return res.send('<h1>No active tunnel URL available</h1>');
+        return res.send('<h1>No active tunnel URL available</h1>'); // Handle cases where no URL is active
     }
 
     const pageContent = `
@@ -52,11 +53,12 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent);
+    res.send(pageContent); // Serve the broadcasting page
 });
 
+
 // Start the server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
