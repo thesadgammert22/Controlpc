@@ -7,16 +7,19 @@ let currentTunnelUrl = ''; // Store the current tunnel URL
 
 // API endpoint to update the tunnel URL
 app.post('/api/update-tunnel', (req, res) => {
-    const { tunnel_url } = req.body; // Extract the tunnel URL from the POST request body
+    const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
-        return res.status(400).json({ error: 'Tunnel URL is required.' }); // Handle missing data
+        console.error('Tunnel URL not provided in the request.');
+        return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url; // Save the tunnel URL globally
-    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' }); // Send success response
+    currentTunnelUrl = tunnel_url; // Save the tunnel URL
+    console.log(`Received Tunnel URL (password): ${currentTunnelUrl}`); // Log it to the console
+
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
+
 
 
 // Serve the broadcasting page
