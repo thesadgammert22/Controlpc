@@ -1,96 +1,62 @@
 const express = require('express');
-const WebSocket = require('ws');
-const http = require('http');
-const localtunnel = require('localtunnel'); // LocalTunnel module
-const winston = require('winston'); // Logging library
-const path = require('path');
-
-// Configuration
-const PORT = 8080; // Local server port
-const AUTH_TOKEN = "hardcoded_auth_token_123"; // Authentication token
-let localTunnelUrl = ""; // Placeholder for LocalTunnel URL
-
-// Create logger with winston
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'server.log' })
-    ]
-});
-
-// Function to start LocalTunnel
-async function startLocalTunnel(port) {
-    try {
-        logger.info("Starting LocalTunnel...");
-        const tunnel = await localtunnel({ port });
-        localTunnelUrl = tunnel.url;
-        logger.info(`LocalTunnel URL: ${localTunnelUrl}`);
-        tunnel.on('close', () => {
-            logger.warn("LocalTunnel connection closed.");
-        });
-        return tunnel;
-    } catch (error) {
-        logger.error("Failed to start LocalTunnel:", error);
-        throw error;
-    }
-}
-
-// Set up Express for serving static files and API endpoints
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
-// Serve static HTML files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
-// Endpoint to get the LocalTunnel URL
-app.get('/localtunnel-url', (req, res) => {
-    if (!localTunnelUrl) {
-        logger.error("LocalTunnel URL is not available yet.");
-        return res.status(500).send("LocalTunnel URL not available yet.");
+let currentTunnelUrl = ''; // Store the current tunnel URL
+
+// API endpoint to update the tunnel URL
+app.post('/api/update-tunnel', (req, res) => {
+    const { tunnel_url } = req.body;
+
+    if (!tunnel_url) {
+        return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
-    res.json({ url: localTunnelUrl });
+
+    currentTunnelUrl = tunnel_url; // Update the current tunnel URL
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
 
-// Handle WebSocket connections
-wss.on('connection', (ws, req) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader !== `Bearer ${AUTH_TOKEN}`) {
-        ws.close(4003, 'Unauthorized');
-        logger.warn("Unauthorized WebSocket connection attempt.");
-        return;
+// Serve the broadcasting page
+app.get('/', (req, res) => {
+    if (!currentTunnelUrl) {
+        return res.send('<h1>No active tunnel URL available</h1>');
     }
 
-    logger.info('WebSocket client connected.');
-
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
-            if (data.type === 'input') {
-                logger.info(`Received input: ${JSON.stringify(data)}`);
-                // Handle mouse and keyboard input here
+    const pageContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Broadcasting Page</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin: 50px;
             }
-        } catch (error) {
-            logger.error("Failed to process WebSocket message:", error);
-        }
-    });
-
-    ws.on('close', () => {
-        logger.info('WebSocket client disconnected.');
-    });
+            iframe {
+                width: 80%;
+                height: 500px;
+                border: 1px solid #333;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Remote Control Interface</h1>
+        <p>Access the controlled PC below:</p>
+        <iframe src="${currentTunnelUrl}" id="remoteTunnel"></iframe>
+    </body>
+    </html>
+    `;
+    res.send(pageContent);
 });
 
-// Start the server and LocalTunnel
-server.listen(PORT, async () => {
-    logger.info(`Server running on http://localhost:${PORT}`);
-    try {
-        await startLocalTunnel(PORT); // Start LocalTunnel when the server starts
-    } catch (error) {
-        logger.error("Failed to initialize LocalTunnel:", error);
-    }
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
