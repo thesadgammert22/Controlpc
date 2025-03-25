@@ -3,91 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Control Interface</title>
+    <title>Broadcasting Page</title>
     <style>
-        iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
-        }
         body {
             font-family: Arial, sans-serif;
             text-align: center;
+            margin: 50px;
         }
-        h1 {
-            color: #333;
+        .box {
+            padding: 20px;
+            border: 2px solid #333;
+            display: inline-block;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <h1>Remote Control Interface</h1>
-    <div id="iframe-container">
-        <p>Loading remote control interface...</p>
-    </div>
+    <p><strong>Your Tunnel Password (Public IP Address):</strong></p>
+    <div class="box" id="ipAddress">Loading...</div>
 
     <script>
-        const AUTH_TOKEN = "hardcoded_auth_token_123";
-
-        // Function to fetch the LocalTunnel URL and embed it in an iframe
-        async function loadIframe() {
-            const iframeContainer = document.getElementById('iframe-container');
+        // Fetch the public IP dynamically from the server
+        async function fetchIPAddress() {
             try {
-                const response = await fetch('/localtunnel-url'); // Endpoint served by the server
+                const response = await fetch('/get-ip');
                 const data = await response.json();
-
-                // Embed the public URL in an iframe
-                iframeContainer.innerHTML = `<iframe src="${data.url}" allowfullscreen></iframe>`;
+                document.getElementById('ipAddress').textContent = data.ip || 'Unavailable';
             } catch (error) {
-                console.error("Failed to load the remote control interface:", error);
-                iframeContainer.innerHTML = `<p>Error loading remote interface. Please check the server.</p>`;
+                document.getElementById('ipAddress').textContent = 'Error fetching IP';
+                console.error(error);
             }
         }
 
-        // WebSocket setup for mouse and keyboard input
-        async function setupWebSocket() {
-            try {
-                const response = await fetch('/localtunnel-url');
-                const { url } = await response.json();
-                const wsUrl = url.replace('https', 'wss'); // Replace protocol for secure WebSocket
-
-                const ws = new WebSocket(wsUrl);
-                ws.onopen = () => {
-                    console.log("Connected to WebSocket server.");
-                };
-
-                ws.onmessage = (event) => {
-                    console.log("Message from server:", event.data);
-                };
-
-                ws.onerror = (error) => {
-                    console.error("WebSocket error:", error);
-                };
-
-                // Send mouse movement data
-                document.addEventListener('mousemove', (event) => {
-                    ws.send(JSON.stringify({
-                        type: "input",
-                        inputType: "mouse",
-                        x: event.clientX,
-                        y: event.clientY
-                    }));
-                });
-
-                // Send keyboard input data
-                document.addEventListener('keydown', (event) => {
-                    ws.send(JSON.stringify({
-                        type: "input",
-                        inputType: "keyboard",
-                        key: event.key
-                    }));
-                });
-            } catch (error) {
-                console.error("Failed to connect to WebSocket server:", error);
-            }
-        }
-
-        loadIframe(); // Load iframe with LocalTunnel URL
-        setupWebSocket(); // Connect WebSocket
+        // Call the function on page load
+        fetchIPAddress();
     </script>
 </body>
 </html>
