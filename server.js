@@ -1,29 +1,28 @@
-const express = require('express');
+const express = require("express");
+const fs = require("fs");
 const app = express();
 
-app.use(express.json());
+app.use(express.json()); // Middleware to parse JSON requests
 
-let currentTunnelUrl = ''; // Store the current tunnel URL
+let currentTunnelUrl = ""; // Store the tunnel URL
 
-// API endpoint to update the tunnel URL
-app.post('/api/update-tunnel', (req, res) => {
+// Endpoint to receive and update the Tunnel URL
+app.post("/api/update-tunnel", (req, res) => {
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
-        console.error('Tunnel URL not provided in the request.');
-        return res.status(400).json({ error: 'Tunnel URL is required.' });
+        return res.status(400).json({ error: "Tunnel URL is required." });
     }
 
-    currentTunnelUrl = tunnel_url; // Save the tunnel URL
-    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
-
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
+    currentTunnelUrl = tunnel_url.trim();
+    console.log(`[INFO] Tunnel URL updated: ${currentTunnelUrl}`);
+    res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
-// Serve the broadcasting page
-app.get('/', (req, res) => {
+// Serve the broadcasting page with the tunnel URL embedded
+app.get("/", (req, res) => {
     if (!currentTunnelUrl) {
-        return res.send('<h1>No active tunnel URL available</h1>');
+        return res.send("<h1>No active tunnel URL available</h1>");
     }
 
     const pageContent = `
@@ -48,17 +47,17 @@ app.get('/', (req, res) => {
         </style>
     </head>
     <body>
-        <h1>Remote Control Interface</h1>
-        <p>Access the controlled PC below:</p>
-        <iframe src="${currentTunnelUrl}" id="remoteTunnel"></iframe>
+        <h1>Remote Screen Sharing</h1>
+        <p>Access the screen below:</p>
+        <iframe src="${currentTunnelUrl}" frameborder="0"></iframe>
     </body>
     </html>
     `;
     res.send(pageContent);
 });
 
-// Start the server on port 4000
+// Start the server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`[INFO] Server running on port ${PORT}`);
 });
