@@ -15,7 +15,7 @@ app.post('/api/update-tunnel', (req, res) => {
     }
 
     currentTunnelUrl = tunnel_url; // Save the tunnel URL
-    console.log(`Received Tunnel URL (password): ${currentTunnelUrl}`); // Log the URL to the console
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
 
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
