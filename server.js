@@ -11,13 +11,15 @@ app.post('/api/update-tunnel', (req, res) => {
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
-        console.error('Tunnel URL not provided.');
+        console.error('Tunnel URL not provided in the request.');
         return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    console.log(`Received Tunnel URL: ${tunnel_url}`);
+    currentTunnelUrl = tunnel_url.trim(); // Clean the input
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
+
 
 
 // Endpoint to serve the broadcasting page
