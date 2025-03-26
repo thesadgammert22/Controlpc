@@ -1,32 +1,34 @@
 const express = require('express');
 const app = express();
 
-app.use(express.json()); // To parse incoming JSON requests
+app.use(express.json()); // Middleware to parse incoming JSON requests
 
-let currentTunnelUrl = ''; // Store the current tunnel URL (IP) of the controlled PC
+// Variable to store the current Tunnel URL
+let currentTunnelUrl = '';
 
-// API endpoint to receive the tunnel URL
+// Endpoint to handle the Tunnel URL update
 app.post('/api/update-tunnel', (req, res) => {
-    const { tunnel_url } = req.body;
+    const { tunnel_url } = req.body; // Extract the tunnel_url from the request body
 
     if (!tunnel_url) {
-        console.error('Tunnel URL not provided.');
-        return res.status(400).json({ error: 'Tunnel URL is required.' });
+        console.error('Error: Tunnel URL not provided.');
+        return res.status(400).json({ error: 'Tunnel URL is required.' }); // Respond with a 400 error if no tunnel URL is provided
     }
 
-    console.log(`Received Tunnel URL: ${tunnel_url}`);
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
+    currentTunnelUrl = tunnel_url.trim(); // Save the URL and clean up any whitespace
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`); // Log the received URL to the console
+
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' }); // Respond with success
 });
 
-
-
-// Root endpoint to serve the broadcasting page
+// Endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
     if (!currentTunnelUrl) {
+        // If no tunnel URL is available, display a friendly error message
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
-    // Dynamically generate the HTML with the received tunnel URL
+    // Generate and serve the broadcasting page with the embedded tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -55,11 +57,11 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent);
+    res.send(pageContent); // Send the generated HTML content
 });
 
 // Start the server
-const PORT = process.env.PORT || 4000; // Use the Render-assigned port, or default to 4000 for local testing
+const PORT = process.env.PORT || 4000; // Use Render's assigned port or default to 4000
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
