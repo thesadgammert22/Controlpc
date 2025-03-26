@@ -9,33 +9,31 @@ let currentTunnelUrl = '';
 // Middleware to log all incoming requests
 app.use((req, res, next) => {
     console.log(`[INFO] Received ${req.method} request for ${req.url}`);
-    next(); // Proceed to the route handler
+    next();
 });
 
-// Endpoint to handle the Tunnel URL update
+// Endpoint to handle Tunnel URL updates
 app.post('/api/update-tunnel', (req, res) => {
-    console.log(`[DEBUG] Request body: ${JSON.stringify(req.body)}`); // Log request body
+    console.log(`[DEBUG] Request body: ${JSON.stringify(req.body)}`);
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
         console.error('[ERROR] Tunnel URL not provided.');
-        return res.status(400).json({ error: 'Tunnel URL is required.' }); // Respond with error if no tunnel_url is provided
+        return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url.trim(); // Store the Tunnel URL
-    console.log(`[INFO] Received Tunnel URL: ${currentTunnelUrl}`); // Log the received Tunnel URL
-
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' }); // Respond with success
+    currentTunnelUrl = tunnel_url.trim();
+    console.log(`[INFO] Updated Tunnel URL: ${currentTunnelUrl}`);
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
 
 // Endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
+    console.log('[INFO] Serving broadcasting page.');
     if (!currentTunnelUrl) {
-        // If no tunnel URL is available, display a friendly error message
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
-    // Generate and serve the broadcasting page with the embedded tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -64,16 +62,16 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent); // Send the generated HTML content
+    res.send(pageContent);
 });
 
-// Error handling for undefined routes
+// Fallback route handler
 app.use((req, res) => {
     console.error(`[ERROR] Route not found: ${req.url}`);
     res.status(404).send('Not Found');
 });
 
-// Start the server
+// Start the server with error handling
 const PORT = process.env.PORT || 4000;
 try {
     app.listen(PORT, () => {
