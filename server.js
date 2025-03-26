@@ -10,12 +10,11 @@ app.post('/api/update-tunnel', (req, res) => {
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
-        console.error('Tunnel URL not provided in the request.');
         return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url.trim(); // Clean up any unnecessary whitespace
-    console.log(`Received Tunnel URL (IP of controlled PC): ${currentTunnelUrl}`);
+    currentTunnelUrl = tunnel_url; // Save the current tunnel URL
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
 
@@ -26,7 +25,6 @@ app.get('/', (req, res) => {
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
-    // Dynamically generate the HTML with the received tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -57,6 +55,7 @@ app.get('/', (req, res) => {
     `;
     res.send(pageContent);
 });
+
 
 // Start the server
 const PORT = process.env.PORT || 4000; // Use the Render-assigned port, or default to 4000 for local testing
