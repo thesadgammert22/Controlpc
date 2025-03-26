@@ -14,11 +14,11 @@ app.post('/api/update-tunnel', (req, res) => {
         return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url; // Save the received tunnel URL
-    console.log(`Received Tunnel URL (IP of controlled PC): ${currentTunnelUrl}`); // Log to Render console
-
+    currentTunnelUrl = tunnel_url.trim(); // Clean up any unnecessary whitespace
+    console.log(`Received Tunnel URL (IP of controlled PC): ${currentTunnelUrl}`);
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
+
 
 // Root endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
