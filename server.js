@@ -1,12 +1,11 @@
 const express = require('express');
 const app = express();
 
-app.use(express.json()); // Middleware to parse incoming JSON requests
+app.use(express.json()); // To parse incoming JSON requests
 
-// Variable to store the current Tunnel URL
-let currentTunnelUrl = '';
+let currentTunnelUrl = ''; // Store the current tunnel URL (IP) of the controlled PC
 
-// Endpoint to handle the Tunnel URL update
+// API endpoint to receive the tunnel URL
 app.post('/api/update-tunnel', (req, res) => {
     const { tunnel_url } = req.body;
 
@@ -15,21 +14,19 @@ app.post('/api/update-tunnel', (req, res) => {
         return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url.trim(); // Clean the input
-    console.log(`Received Tunnel URL: ${currentTunnelUrl}`);
+    currentTunnelUrl = tunnel_url.trim(); // Clean up any unnecessary whitespace
+    console.log(`Received Tunnel URL (IP of controlled PC): ${currentTunnelUrl}`);
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
 
 
-
-// Endpoint to serve the broadcasting page
+// Root endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
     if (!currentTunnelUrl) {
-        // If no tunnel URL is available, display a friendly error message
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
-    // Generate and serve the broadcasting page with the embedded tunnel URL
+    // Dynamically generate the HTML with the received tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -58,11 +55,11 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent); // Send the generated HTML content
+    res.send(pageContent);
 });
 
 // Start the server
-const PORT = process.env.PORT || 4000; // Use Render's assigned port or default to 4000
+const PORT = process.env.PORT || 4000; // Use the Render-assigned port, or default to 4000 for local testing
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
