@@ -22,7 +22,7 @@ app.post('/api/update-tunnel', (req, res) => {
 // Root endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
     if (!currentTunnelUrl) {
-        return res.send('<h1>No active tunnel URL available</h1>');
+        return res.send('<h1>No active tunnel URL available</h1>'); // Handle cases where no URL is active
     }
 
     const pageContent = `
@@ -53,7 +53,7 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent);
+    res.send(pageContent); // Serve the broadcasting page
 });
 
 
