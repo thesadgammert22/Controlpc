@@ -1,40 +1,34 @@
 const express = require('express');
 const app = express();
 
-app.use(express.json()); // Middleware to parse JSON requests
+app.use(express.json()); // Middleware to parse incoming JSON requests
 
 // Variable to store the current Tunnel URL
 let currentTunnelUrl = '';
 
-// Middleware to log all incoming requests
-app.use((req, res, next) => {
-    console.log(`[INFO] Received ${req.method} request for ${req.url}`);
-    next();
-});
-
-// Endpoint to handle Tunnel URL updates
+// Endpoint to handle the Tunnel URL update
 app.post('/api/update-tunnel', (req, res) => {
-    console.log("[INFO] POST request received at /api/update-tunnel");
-    console.log(`[DEBUG] Request body: ${JSON.stringify(req.body)}`);
-    const { tunnel_url } = req.body;
+    const { tunnel_url } = req.body; // Extract the tunnel_url from the request body
 
     if (!tunnel_url) {
-        console.error("[ERROR] Tunnel URL not provided.");
-        return res.status(400).json({ error: "Tunnel URL is required." });
+        console.error('Error: Tunnel URL not provided.');
+        return res.status(400).json({ error: 'Tunnel URL is required.' }); // Respond with a 400 error if no tunnel URL is provided
     }
 
-    currentTunnelUrl = tunnel_url.trim();
-    console.log(`[INFO] Tunnel URL updated: ${currentTunnelUrl}`);
-    res.status(200).json({ message: "Tunnel URL updated successfully." });
+    currentTunnelUrl = tunnel_url.trim(); // Save the URL and clean up any whitespace
+    console.log(`Received Tunnel URL: ${currentTunnelUrl}`); // Log the received URL to the console
+
+    res.status(200).json({ message: 'Tunnel URL updated successfully.' }); // Respond with success
 });
 
 // Endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
-    console.log('[INFO] Serving broadcasting page.');
     if (!currentTunnelUrl) {
+        // If no tunnel URL is available, display a friendly error message
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
+    // Generate and serve the broadcasting page with the embedded tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -63,21 +57,11 @@ app.get('/', (req, res) => {
     </body>
     </html>
     `;
-    res.send(pageContent);
+    res.send(pageContent); // Send the generated HTML content
 });
 
-// Fallback route handler
-app.use((req, res) => {
-    console.error(`[ERROR] Route not found: ${req.url}`);
-    res.status(404).send('Not Found');
+// Start the server
+const PORT = process.env.PORT || 4000; // Use Render's assigned port or default to 4000
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
-
-// Start the server with error handling
-const PORT = process.env.PORT || 4000;
-try {
-    app.listen(PORT, () => {
-        console.log(`[INFO] Server running on port ${PORT}`);
-    });
-} catch (err) {
-    console.error(`[ERROR] Failed to start server: ${err.message}`);
-}
