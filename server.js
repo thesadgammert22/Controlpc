@@ -14,17 +14,18 @@ app.use((req, res, next) => {
 
 // Endpoint to handle Tunnel URL updates
 app.post('/api/update-tunnel', (req, res) => {
+    console.log("[INFO] POST request received at /api/update-tunnel");
     console.log(`[DEBUG] Request body: ${JSON.stringify(req.body)}`);
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
-        console.error('[ERROR] Tunnel URL not provided.');
-        return res.status(400).json({ error: 'Tunnel URL is required.' });
+        console.error("[ERROR] Tunnel URL not provided.");
+        return res.status(400).json({ error: "Tunnel URL is required." });
     }
 
     currentTunnelUrl = tunnel_url.trim();
-    console.log(`[INFO] Updated Tunnel URL: ${currentTunnelUrl}`);
-    res.status(200).json({ message: 'Tunnel URL updated successfully.' });
+    console.log(`[INFO] Tunnel URL updated: ${currentTunnelUrl}`);
+    res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
 // Endpoint to serve the broadcasting page
