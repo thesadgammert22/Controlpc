@@ -16,6 +16,12 @@
             display: inline-block;
             margin-top: 20px;
         }
+        iframe {
+            width: 80%;
+            height: 500px;
+            border: 1px solid black;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -23,11 +29,14 @@
     <p><strong>Your Tunnel Password (Public IP Address):</strong></p>
     <div class="box" id="ipAddress">Loading...</div>
 
+    <p><strong>Live Screen Feed:</strong></p>
+    <iframe src="/video_feed" frameborder="0"></iframe>
+
     <script>
         // Fetch the public IP dynamically from the server
         async function fetchIPAddress() {
             try {
-                const response = await fetch('/get-ip');
+                const response = await fetch('/get-ip'); // Ensure this endpoint returns the IP address as JSON
                 const data = await response.json();
                 document.getElementById('ipAddress').textContent = data.ip || 'Unavailable';
             } catch (error) {
