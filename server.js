@@ -1,11 +1,11 @@
 const express = require('express');
 const app = express();
 
-app.use(express.json());
+app.use(express.json()); // To parse incoming JSON requests
 
-let currentTunnelUrl = ''; // Store the current tunnel URL
+let currentTunnelUrl = ''; // Store the current tunnel URL (IP) of the controlled PC
 
-// API endpoint to update the tunnel URL
+// API endpoint to receive the tunnel URL
 app.post('/api/update-tunnel', (req, res) => {
     const { tunnel_url } = req.body;
 
@@ -14,18 +14,19 @@ app.post('/api/update-tunnel', (req, res) => {
         return res.status(400).json({ error: 'Tunnel URL is required.' });
     }
 
-    currentTunnelUrl = tunnel_url; // Save the tunnel URL
-    console.log(`Received Tunnel URL (password): ${currentTunnelUrl}`); // Log the URL to the console
+    currentTunnelUrl = tunnel_url; // Save the received tunnel URL
+    console.log(`Received Tunnel URL (IP of controlled PC): ${currentTunnelUrl}`); // Log to Render console
 
     res.status(200).json({ message: 'Tunnel URL updated successfully.' });
 });
 
-// Serve the broadcasting page
+// Root endpoint to serve the broadcasting page
 app.get('/', (req, res) => {
     if (!currentTunnelUrl) {
         return res.send('<h1>No active tunnel URL available</h1>');
     }
 
+    // Dynamically generate the HTML with the received tunnel URL
     const pageContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -57,8 +58,8 @@ app.get('/', (req, res) => {
     res.send(pageContent);
 });
 
-// Start the server on port 4000
-const PORT = process.env.PORT || 4000;
+// Start the server
+const PORT = process.env.PORT || 4000; // Use the Render-assigned port, or default to 4000 for local testing
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
