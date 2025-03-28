@@ -4,6 +4,7 @@ const app = express();
 
 app.use(express.json()); // Middleware to parse JSON requests
 
+let currentPublicIP = ""; // Store the public IP
 let currentTunnelUrl = ""; // Store the tunnel URL
 
 // List of alternative APIs to fetch the public IP address
@@ -60,6 +61,19 @@ function getPublicIP(callback, retries = 3) {
     tryApi(0); // Start with the first API
 }
 
+// Endpoint to receive and update the Public IP
+app.post("/api/update-ip", (req, res) => {
+    const { public_ip } = req.body;
+
+    if (!public_ip) {
+        return res.status(400).json({ error: "Public IP is required." });
+    }
+
+    currentPublicIP = public_ip.trim();
+    console.log(`[INFO] Public IP updated: ${currentPublicIP}`);
+    res.status(200).json({ message: "Public IP updated successfully." });
+});
+
 // Endpoint to receive and update the Tunnel URL
 app.post("/api/update-tunnel", (req, res) => {
     const { tunnel_url } = req.body;
@@ -73,7 +87,7 @@ app.post("/api/update-tunnel", (req, res) => {
     res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
-// Serve the broadcasting page with the Tunnel URL and public IP
+// Serve the broadcasting page with the Tunnel URL and Public IP
 app.get("/", (req, res) => {
     getPublicIP((publicIP) => {
         const tunnelMessage = currentTunnelUrl
@@ -111,7 +125,7 @@ app.get("/", (req, res) => {
             ${tunnelMessage}
             <div class="ip-display">
                 My Public IP Address is:<br>
-                <strong>${publicIP}</strong>
+                <strong>${currentPublicIP || publicIP}</strong>
             </div>
         </body>
         </html>
