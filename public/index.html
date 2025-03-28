@@ -15,27 +15,32 @@
             height: 500px;
             border: 2px solid #333;
         }
+        .ip-address {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #555;
+        }
     </style>
 </head>
 <body>
     <h1>Live Screen Share</h1>
     <p>The screen feed is embedded below:</p>
-   <iframe src="/video_feed" frameborder="0" width="80%" height="500px"></iframe>
+    <iframe src="/video_feed" frameborder="0" width="80%" height="500px"></iframe>
+    <div id="ip-address" class="ip-address"></div>
     <script>
-        async function loadIframe() {
-            // Fetch the tunnel URL from the server (tunnel_url.txt is already written by LocalTunnel)
+        async function loadDeviceIP() {
+            // Fetch the device's IP and tunnel URL dynamically
             try {
-                const response = await fetch('/get-tunnel-url');  // Flask route for retrieving the URL
+                const response = await fetch("/api/device-ip");
                 const data = await response.json();
-                const iframe = document.getElementById("screenFrame");
-                iframe.src = `${data.tunnel_url}/video_feed`;
+                document.getElementById("ip-address").innerText = `Device IP: http://${data.ip}`;
             } catch (error) {
-                console.error("Error fetching the tunnel URL:", error);
+                console.error("Error fetching device IP:", error);
             }
         }
 
-        // Load the iframe when the page is loaded
-        loadIframe();
+        // Load the IP when the page is loaded
+        loadDeviceIP();
     </script>
 </body>
 </html>
