@@ -1,26 +1,26 @@
 const express = require("express");
 const os = require("os");
+const fetch = require("node-fetch");
 const app = express();
 
 app.use(express.json()); // Middleware to parse JSON requests
 
 let currentTunnelUrl = ""; // Store the tunnel URL
 
-// Function to retrieve the device's IPv4 address
-function getDeviceIP() {
-    const interfaces = os.networkInterfaces();
-    for (let iface in interfaces) {
-        for (let alias of interfaces[iface]) {
-            if (alias.family === "IPv4" && !alias.internal) {
-                return alias.address; // Return the external IPv4 address
-            }
-        }
+// Function to retrieve the device's public IP address
+async function getPublicIP() {
+    try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        return data.ip; // Return the public IP
+    } catch (error) {
+        console.error("[ERROR] Failed to fetch public IP:", error);
+        return "Unavailable";
     }
-    return "127.0.0.1"; // Default to localhost
 }
 
 // Endpoint to receive and update the Tunnel URL
-app.post("/api/update-tunnel", (req, res) => {
+app.post("/api/update-tunnel", async (req, res) => {
     const { tunnel_url } = req.body;
 
     if (!tunnel_url) {
@@ -32,9 +32,9 @@ app.post("/api/update-tunnel", (req, res) => {
     res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
-// Serve the broadcasting page with the tunnel URL and IPv4 address
-app.get("/", (req, res) => {
-    const deviceIP = getDeviceIP(); // Get local IPv4 address
+// Serve the broadcasting page with the tunnel URL and public IP address
+app.get("/", async (req, res) => {
+    const publicIP = await getPublicIP(); // Get public IPv4 address
     const tunnelMessage = currentTunnelUrl
         ? `<iframe src="${currentTunnelUrl}" frameborder="0"></iframe>`
         : "<h2>No active tunnel URL available</h2>";
@@ -69,8 +69,8 @@ app.get("/", (req, res) => {
         <h1>Remote Screen Sharing</h1>
         ${tunnelMessage}
         <div class="ip-display">
-            My IP Address is:<br>
-            <strong>IPv4: ${deviceIP}</strong>
+            My Public IP Address is:<br>
+            <strong>IPv4: ${publicIP}</strong>
         </div>
     </body>
     </html>
