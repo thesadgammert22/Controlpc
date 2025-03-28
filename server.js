@@ -1,5 +1,4 @@
 const express = require("express");
-const os = require("os");
 const https = require("https");
 const app = express();
 
@@ -7,37 +6,58 @@ app.use(express.json()); // Middleware to parse JSON requests
 
 let currentTunnelUrl = ""; // Store the tunnel URL
 
-// Function to retrieve the public IP address using Node.js HTTPS module
-function getPublicIP(callback) {
-    const options = {
-        hostname: "api.ipify.org",
-        path: "/?format=json",
-        method: "GET",
+// List of alternative APIs to fetch the public IP address
+const ipApis = [
+    { hostname: "api.ipify.org", path: "/?format=json" },
+    { hostname: "httpbin.org", path: "/ip" },
+    { hostname: "ifconfig.me", path: "/" }
+];
+
+// Function to fetch public IP using multiple APIs
+function getPublicIP(callback, retries = 3) {
+    const tryApi = (index) => {
+        if (index >= ipApis.length) {
+            callback("Unavailable"); // All APIs failed
+            return;
+        }
+
+        const options = {
+            hostname: ipApis[index].hostname,
+            path: ipApis[index].path,
+            method: "GET",
+        };
+
+        const req = https.request(options, (res) => {
+            let data = "";
+            res.on("data", (chunk) => {
+                data += chunk;
+            });
+
+            res.on("end", () => {
+                try {
+                    let publicIp;
+                    if (ipApis[index].hostname === "httpbin.org") {
+                        publicIp = JSON.parse(data).origin; // For httpbin.org
+                    } else {
+                        publicIp = JSON.parse(data).ip; // For ipify.org and similar
+                    }
+                    callback(publicIp); // Return the public IP
+                } catch (error) {
+                    console.error(`[ERROR] Failed to parse response from ${ipApis[index].hostname}:`, error);
+                    tryApi(index + 1); // Try next API
+                }
+            });
+        });
+
+        req.on("error", (error) => {
+            console.error(`[ERROR] Failed to fetch IP from ${ipApis[index].hostname}:`, error);
+            tryApi(index + 1); // Try next API
+        });
+
+        req.end();
     };
 
-    const req = https.request(options, (res) => {
-        let data = "";
-        res.on("data", (chunk) => {
-            data += chunk;
-        });
-
-        res.on("end", () => {
-            try {
-                const json = JSON.parse(data);
-                callback(json.ip); // Return the public IP
-            } catch (error) {
-                console.error("[ERROR] Failed to parse public IP response:", error);
-                callback("Unavailable");
-            }
-        });
-    });
-
-    req.on("error", (error) => {
-        console.error("[ERROR] Failed to fetch public IP:", error);
-        callback("Unavailable");
-    });
-
-    req.end();
+    tryApi(0); // Start with the first API
 }
 
 // Endpoint to receive and update the Tunnel URL
@@ -53,7 +73,7 @@ app.post("/api/update-tunnel", (req, res) => {
     res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
-// Serve the broadcasting page with the tunnel URL and public IP
+// Serve the broadcasting page with the Tunnel URL and public IP
 app.get("/", (req, res) => {
     getPublicIP((publicIP) => {
         const tunnelMessage = currentTunnelUrl
