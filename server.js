@@ -1,5 +1,4 @@
 const express = require("express");
-const fs = require("fs");
 const os = require("os");
 const app = express();
 
@@ -33,12 +32,12 @@ app.post("/api/update-tunnel", (req, res) => {
     res.status(200).json({ message: "Tunnel URL updated successfully." });
 });
 
-// Serve the broadcasting page with the tunnel URL embedded
+// Serve the broadcasting page with the tunnel URL and IPv4 address
 app.get("/", (req, res) => {
-    const deviceIP = getDeviceIP(); // Fetch the local device IP
-    if (!currentTunnelUrl) {
-        return res.send("<h1>No active tunnel URL available</h1>");
-    }
+    const deviceIP = getDeviceIP(); // Get local IPv4 address
+    const tunnelMessage = currentTunnelUrl
+        ? `<iframe src="${currentTunnelUrl}" frameborder="0"></iframe>`
+        : "<h2>No active tunnel URL available</h2>";
 
     const pageContent = `
     <!DOCTYPE html>
@@ -59,18 +58,20 @@ app.get("/", (req, res) => {
                 border: 1px solid #333;
                 margin-top: 20px;
             }
-            .ip-address {
+            .ip-display {
                 margin-top: 20px;
-                font-size: 1.2em;
-                color: #555;
+                font-size: 1.5em;
+                color: #333;
             }
         </style>
     </head>
     <body>
         <h1>Remote Screen Sharing</h1>
-        <p>Access the screen below:</p>
-        <iframe src="${currentTunnelUrl}" frameborder="0"></iframe>
-        <div class="ip-address">Device IP: http://${deviceIP}:8080</div>
+        ${tunnelMessage}
+        <div class="ip-display">
+            My IP Address is:<br>
+            <strong>IPv4: ${deviceIP}</strong>
+        </div>
     </body>
     </html>
     `;
