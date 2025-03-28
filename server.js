@@ -91,7 +91,7 @@ app.get("/", (req, res) => {
             ${tunnelMessage}
             <div class="ip-display">
                 My Public IP Address is:<br>
-                <strong>IPv4: ${publicIP}</strong>
+                <strong>${publicIP}</strong>
             </div>
         </body>
         </html>
